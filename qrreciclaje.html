@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro Reciclaje · Plantabal</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --bg: #F2F8F4;
+  --surface: #FFFFFF;
+  --surface-2: #EAF3ED;
+  --primary: #1A5C38;
+  --primary-dark: #0F3D25;
+  --primary-lt: #4DB87A;
+  --text: #162B1E;
+  --text-mid: #3D5446;
+  --muted: #6D8576;
+  --border: #C8E0D0;
+  --shadow: 0 1px 4px rgba(26,92,56,0.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+:root[data-theme="dark"] {
+  --bg:#0D1F14;--surface:#142319;--surface-2:#1B2F22;
+  --primary:#3DBD72;--primary-dark:#2E9A5A;--primary-lt:#4DD98A;
+  --text:#E4F2EA;--text-mid:#A8C9B4;--muted:#6E9479;
+  --border:#243D2C;--shadow:0 1px 6px rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;line-height:1.5}
+button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+
+/* Login */
+#loginOverlay{position:fixed;inset:0;z-index:500;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:24px}
+#appShell{display:none}
+
+/* Header */
+.app-header{background:var(--primary);color:#fff;padding:16px 20px;
+  display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.header-icon{font-size:28px}
+.header-title{font-size:1rem;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+.header-sub{font-size:.7rem;opacity:.8;text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
+.logout-btn{margin-left:auto;padding:6px 12px;border-radius:20px;
+  background:rgba(255,255,255,.2);font-size:.75rem;font-weight:700;color:#fff;
+  border:1px solid rgba(255,255,255,.3)}
+.logout-btn:hover{background:rgba(255,255,255,.3)}
+
+/* Main */
+.main{max-width:560px;margin:0 auto;padding:20px 16px 48px}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+.card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted);margin-bottom:14px;
+  display:flex;align-items:center;gap:6px}
+
+/* Form */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--text-mid);
+  margin-bottom:5px;letter-spacing:.01em}
+.field select,.field input{
+  width:100%;padding:10px 12px;background:var(--bg);
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;
+  outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.field select:focus,.field input:focus{border-color:var(--primary)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Tipo cards */
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.tipo-opt{position:relative}
+.tipo-opt input[type="radio"]{position:absolute;opacity:0;width:0;height:0}
+.tipo-opt label{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:14px 8px;border-radius:var(--radius-sm);border:2px solid var(--border);
+  font-size:.8rem;font-weight:700;cursor:pointer;transition:all .12s;
+  text-align:center;line-height:1.3;color:var(--text-mid);background:var(--bg);
+  gap:6px}
+.tipo-opt label .ico{font-size:24px}
+.tipo-opt input:checked + label{
+  border-color:var(--primary);background:var(--surface-2);color:var(--primary-dark)}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:13px 20px;border-radius:var(--radius-sm);font-size:.92rem;
+  font-weight:700;letter-spacing:.01em;transition:opacity .15s,background .15s}
+.btn:active{opacity:.8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--primary-dark)}
+
+/* Login card */
+.login-wrap{width:100%;max-width:360px}
+.login-mark{width:60px;height:60px;border-radius:14px;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+  margin:0 auto 16px;box-shadow:0 4px 14px rgba(26,92,56,.25)}
+.login-title{font-size:1.4rem;font-weight:800;text-align:center;color:var(--text);
+  letter-spacing:-.01em;margin-bottom:4px}
+.login-sub{font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:20px}
+.login-error{color:#B91C1C;font-size:.78rem;font-weight:600;margin-bottom:12px;
+  text-align:center;padding:8px;background:#FEE2E2;border-radius:6px;display:none}
+
+/* Success */
+.success-card{text-align:center;padding:30px 20px}
+.success-icon{font-size:52px;margin-bottom:12px}
+.success-title{font-size:1.1rem;font-weight:800;color:var(--primary-dark);margin-bottom:6px}
+.success-sub{font-size:.82rem;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.btn-ghost{background:var(--surface-2);color:var(--text-mid);
+  border:1.5px solid var(--border);padding:10px 20px;border-radius:var(--radius-sm);
+  font-size:.85rem;font-weight:600;display:inline-flex;align-items:center;
+  justify-content:center;gap:6px;cursor:pointer;transition:border-color .15s}
+.btn-ghost:hover{border-color:var(--primary)}
+
+/* Chip */
+.chip{display:inline-block;padding:3px 10px;border-radius:20px;
+  background:var(--surface-2);border:1px solid var(--border);
+  font-size:.72rem;font-weight:700;color:var(--primary-dark)}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:var(--bg);padding:10px 20px;border-radius:20px;
+  font-size:.82rem;font-weight:600;z-index:100;opacity:0;pointer-events:none;
+  transition:opacity .2s;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* Theme toggle */
+.theme-btn{position:fixed;top:14px;right:16px;z-index:600;
+  width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+  border:1px solid rgba(255,255,255,.25);color:#fff}
+</style>
+</head>
+<body>
+
+<button class="theme-btn" id="themeBtn" title="Cambiar tema">🌙</button>
+
+<!-- LOGIN -->
+<div id="loginOverlay">
+  <div class="login-wrap">
+    <div class="login-mark">♻️</div>
+    <div class="login-title">Bodega de Reciclaje</div>
+    <div class="login-sub">Plantabal — Ingresa para registrar material</div>
+    <div class="card">
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="loginEmail" placeholder="correo@3acomposites.com" autocomplete="email">
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Contraseña</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="login-error" id="loginError"></div>
+      <button class="btn btn-primary" id="loginBtn">Ingresar</button>
+    </div>
+    <p style="text-align:center;font-size:.7rem;color:var(--muted);margin-top:14px">
+      Sistema interno · Plantabal SST
+    </p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appShell">
+  <div class="app-header">
+    <div class="header-icon">♻️</div>
+    <div>
+      <div class="header-title">Bodega de Reciclaje</div>
+      <div class="header-sub">Registro de materiales · Plantabal</div>
+    </div>
+    <button class="logout-btn" id="logoutBtn">Salir</button>
+  </div>
+
+  <div class="main">
+    <!-- FORMULARIO -->
+    <div id="formView">
+      <div class="card">
+        <div class="card-title">♻️ &nbsp;Nuevo registro — GE-GA-R9</div>
+
+        <div class="field">
+          <label>Tipo de material</label>
+          <div class="tipo-grid">
+            <div class="tipo-opt">
+              <input type="radio" name="tipo" id="t_carton" value="Reciclable Cartón" checked>
+              <label for="t_carton"><span class="ico">📦</span>Cartón</label>
+            </div>
+            <div class="tipo-opt">
+              <input type="radio" name="tipo" id="t_pet" value="Reciclable PET">
+              <label for="t_pet"><span class="ico">🍶</span>PET / Plástico</label>
+            </div>
+            <div class="tipo-opt">
+              <input type="radio" name="tipo" id="t_chatarra" value="Reciclable Chatarra">
+              <label for="t_chatarra"><span class="ico">🔩</span>Chatarra</label>
+            </div>
+            <div class="tipo-opt">
+              <input type="radio" name="tipo" id="t_comun" value="Desechos Comunes">
+              <label for="t_comun"><span class="ico">🗑️</span>Desechos comunes</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Localidad</label>
+          <select id="r_localidad">
+            <option>Planta Quevedo</option>
+            <option>Planta S.D.</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="r_fecha">
+        </div>
+
+        <div class="row2">
+          <div class="field" style="margin-bottom:0">
+            <label>Peso (kg)</label>
+            <input type="number" step="0.1" min="0" id="r_peso" placeholder="0.0">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Destino</label>
+            <select id="r_destino">
+              <option>Recolector Municipal</option>
+              <option>El Gato</option>
+              <option>R. Modelo</option>
+              <option>García</option>
+              <option>Novared</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:14px">
+          <label>Técnico que registra</label>
+          <input type="text" id="r_tecnico" placeholder="Nombre completo" list="tecnicos-list">
+          <datalist id="tecnicos-list">
+            <option>Viviana</option><option>Érika</option><option>Joel</option>
+            <option>Kevin</option><option>Debbie</option><option>Frank</option>
+          </datalist>
+        </div>
+
+        <div class="field">
+          <label>Observaciones (opcional)</label>
+          <input type="text" id="r_obs" placeholder="Notas adicionales...">
+        </div>
+
+        <div style="margin-top:18px">
+          <button class="btn btn-primary" id="submitBtn">
+            <span id="submitLabel">Guardar registro</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉXITO -->
+    <div id="successView" style="display:none">
+      <div class="card success-card">
+        <div class="success-icon">✅</div>
+        <div class="success-title">Registro guardado</div>
+        <div class="success-sub" id="successDetail"></div>
+        <button class="btn-ghost" id="nuevoBtn">+ Nuevo registro</button>
+      </div>
+      <div class="card" id="lastRecords" style="display:none">
+        <div class="card-title">🕒 &nbsp;Últimos registros de esta sesión</div>
+        <div id="lastList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const firebaseConfig = {
+  apiKey:            "AIzaSyB7JSmnk1Pr1nkbxgHwDEKE5MtDNTO0m7E",
+  authDomain:        "auditoria-de-segregacion.firebaseapp.com",
+  projectId:         "auditoria-de-segregacion",
+  storageBucket:     "auditoria-de-segregacion.firebasestorage.app",
+  messagingSenderId: "667238935996",
+  appId:             "1:667238935996:web:649aadde8dcb698b1bcfb9"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+let sessionRecords = [];
+
+// ── Theme ──
+let theme = localStorage.getItem('pb_theme') || 'light';
+applyTheme(theme);
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+}
+document.getElementById('themeBtn').addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('pb_theme', theme);
+  applyTheme(theme);
+});
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ── Auth ──
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('loginPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('loginBtn');
+  if (!email || !pass) return;
+  btn.disabled = true; btn.textContent = 'Ingresando...';
+  errEl.style.display = 'none';
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(e) {
+    errEl.textContent = 'Correo o contraseña incorrectos';
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Ingresar';
+  }
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  if (!confirm('¿Cerrar sesión?')) return;
+  await auth.signOut();
+});
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+    document.getElementById('r_fecha').value = todayISO();
+  } else {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('appShell').style.display = 'none';
+    document.getElementById('loginBtn').disabled = false;
+    document.getElementById('loginBtn').textContent = 'Ingresar';
+  }
+});
+
+// ── Utils ──
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function uid() { return 'r' + Date.now() + Math.random().toString(16).slice(2, 7); }
+
+// ── Submit ──
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const tipo     = document.querySelector('input[name="tipo"]:checked')?.value;
+  const localidad = document.getElementById('r_localidad').value;
+  const fecha    = document.getElementById('r_fecha').value || todayISO();
+  const pesoRaw  = document.getElementById('r_peso').value;
+  const destino  = document.getElementById('r_destino').value;
+  const tecnico  = document.getElementById('r_tecnico').value.trim();
+  const obs      = document.getElementById('r_obs').value.trim();
+
+  if (!pesoRaw || isNaN(parseFloat(pesoRaw))) {
+    showToast('⚠️ Ingresa un peso válido');
+    return;
+  }
+  const peso = parseFloat(pesoRaw);
+
+  const rec = {
+    id: uid(),
+    origen: 'qr_reciclaje',
+    fecha, localidad, tipo, peso, destino, tecnico, obs,
+    fecha_registro: new Date().toISOString()
+  };
+
+  const btn = document.getElementById('submitBtn');
+  const lbl = document.getElementById('submitLabel');
+  btn.disabled = true; lbl.textContent = 'Guardando...';
+
+  try {
+    await db.collection('residuos_comunes').doc(rec.id).set(rec);
+    sessionRecords.unshift(rec);
+    renderSuccess(rec);
+    document.getElementById('formView').style.display = 'none';
+    document.getElementById('successView').style.display = 'block';
+  } catch(err) {
+    console.error(err);
+    showToast('❌ Error al guardar. Verifica tu conexión.');
+  } finally {
+    btn.disabled = false; lbl.textContent = 'Guardar registro';
+  }
+});
+
+const TIPO_ICONS = {
+  'Reciclable Cartón': '📦',
+  'Reciclable PET': '🍶',
+  'Reciclable Chatarra': '🔩',
+  'Desechos Comunes': '🗑️'
+};
+
+function renderSuccess(rec) {
+  const ico = TIPO_ICONS[rec.tipo] || '♻️';
+  document.getElementById('successDetail').innerHTML =
+    `${ico} <strong>${rec.tipo}</strong> · <strong>${rec.peso.toFixed(1)} kg</strong><br>
+     ${rec.localidad} — ${fmtDate(rec.fecha)}`;
+
+  const list = document.getElementById('lastList');
+  list.innerHTML = sessionRecords.map(r => {
+    const i = TIPO_ICONS[r.tipo] || '♻️';
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;
+      border-bottom:1px solid var(--border)">
+      <span style="font-size:20px">${i}</span>
+      <div style="flex:1;font-size:.8rem">
+        <div style="font-weight:600">${r.tipo}</div>
+        <div style="color:var(--muted);font-size:.72rem">${r.localidad} · ${fmtDate(r.fecha)} · ${r.peso.toFixed(1)} kg</div>
+      </div>
+    </div>
+  `;}).join('');
+  document.getElementById('lastRecords').style.display = sessionRecords.length ? 'block' : 'none';
+}
+
+document.getElementById('nuevoBtn').addEventListener('click', () => {
+  document.getElementById('r_peso').value = '';
+  document.getElementById('r_obs').value = '';
+  document.getElementById('r_tecnico').value = '';
+  document.getElementById('r_fecha').value = todayISO();
+  document.getElementById('formView').style.display = 'block';
+  document.getElementById('successView').style.display = 'none';
+});
+</script>
+</body>
+</html>
