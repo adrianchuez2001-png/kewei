@@ -1,0 +1,2095 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ambiental & Segregación · Plantabal</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --bg:#F2F8F4;--surface:#FFFFFF;--surface-2:#EAF3ED;
+  --primary:#1A5C38;--primary-mid:#2E7D52;--primary-lt:#4DB87A;
+  --text:#162B1E;--text-mid:#3D5446;--muted:#6D8576;
+  --border:#C8E0D0;--shadow:0 1px 4px rgba(26,92,56,0.08);
+  --c-ok:#15803D;--c-nc:#B91C1C;--c-na:#64748B;
+  --bin-negro:#1C1C1C;--bin-azul:#1D4ED8;--bin-verde:#15803D;
+  --bin-gris:#71717A;--bin-rojo:#B91C1C;
+  --nav-h:60px;--radius:12px;--radius-sm:8px;
+  /* amber (peligrosos) */
+  --amber:#C4791F;--amber-deep:#8F5313;--amber-tint:#F5E7D2;--amber-border:#E8CEAB;
+  /* blue (captacion) */
+  --blue:#2E6B99;--blue-deep:#1E4A6B;--blue-tint:#DDE9F1;--blue-border:#B8D3E8;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#0D1F14;--surface:#142319;--surface-2:#1B2F22;
+  --primary:#3DBD72;--primary-mid:#2E9A5A;--primary-lt:#4DD98A;
+  --text:#E4F2EA;--text-mid:#A8C9B4;--muted:#6E9479;
+  --border:#243D2C;--shadow:0 1px 6px rgba(0,0,0,.35);
+  --c-ok:#4ADE80;--c-nc:#F87171;--c-na:#94A3B8;
+}}
+:root[data-theme="dark"]{
+  --bg:#0D1F14;--surface:#142319;--surface-2:#1B2F22;
+  --primary:#3DBD72;--primary-mid:#2E9A5A;--primary-lt:#4DD98A;
+  --text:#E4F2EA;--text-mid:#A8C9B4;--muted:#6E9479;
+  --border:#243D2C;--shadow:0 1px 6px rgba(0,0,0,.35);
+  --c-ok:#4ADE80;--c-nc:#F87171;--c-na:#94A3B8;
+}
+:root[data-theme="light"]{
+  --bg:#F2F8F4;--surface:#FFFFFF;--surface-2:#EAF3ED;
+  --primary:#1A5C38;--primary-mid:#2E7D52;--primary-lt:#4DB87A;
+  --text:#162B1E;--text-mid:#3D5446;--muted:#6D8576;
+  --border:#C8E0D0;--shadow:0 1px 4px rgba(26,92,56,.08);
+  --c-ok:#15803D;--c-nc:#B91C1C;--c-na:#64748B;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;
+  padding-bottom:var(--nav-h);line-height:1.5}
+button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+img{max-width:100%}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+/* ── Login ── */
+#loginOverlay{position:fixed;inset:0;z-index:500;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:24px}
+
+/* ── Header ── */
+.app-header{position:sticky;top:0;z-index:40;background:var(--surface);
+  border-bottom:1px solid var(--border);padding:0 16px;height:52px;
+  display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px}
+.logo-mark{width:30px;height:30px;border-radius:7px;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;font-size:14px}
+.theme-btn{width:34px;height:34px;border-radius:50%;background:var(--surface-2);
+  display:flex;align-items:center;justify-content:center;font-size:15px}
+.theme-btn:hover{background:var(--border)}
+.logout-btn-hdr{font-size:13px;padding:4px 8px;border-radius:6px;
+  color:var(--muted);display:none}
+.logout-btn-hdr:hover{background:var(--surface-2)}
+
+/* ── Pages ── */
+.page{display:none;padding:14px;max-width:760px;margin:0 auto}
+.page.active{display:block}
+
+/* ── Bottom Nav ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:40;height:var(--nav-h);
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bottom-nav::-webkit-scrollbar{display:none}
+.nav-tab{flex:0 0 auto;min-width:72px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;
+  font-size:.58rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--muted);transition:color .15s;padding:0 8px;
+  padding-bottom:env(safe-area-inset-bottom,0)}
+.nav-tab .icon{font-size:18px;line-height:1}
+.nav-tab.active{color:var(--primary)}
+.nav-tab.active-amber{color:var(--amber-deep)}
+.nav-tab.active-blue{color:var(--blue-deep)}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);margin-bottom:12px}
+.card-title{font-size:.7rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted);margin-bottom:12px;
+  display:flex;align-items:center;gap:5px}
+
+/* ── Form ── */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.76rem;font-weight:600;color:var(--text-mid);
+  margin-bottom:4px;letter-spacing:.01em}
+.field select,.field input[type="text"],.field input[type="date"],
+.field input[type="week"],.field input[type="email"],.field input[type="password"],
+.field input[type="number"]{
+  width:100%;padding:9px 11px;background:var(--bg);
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.88rem;
+  outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.field select:focus,.field input:focus{border-color:var(--primary-mid)}
+.field textarea{width:100%;padding:9px 11px;background:var(--bg);
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.88rem;
+  outline:none;resize:vertical;min-height:46px;transition:border-color .15s}
+.field textarea:focus{border-color:var(--primary-mid)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.panel2{display:grid;grid-template-columns:320px 1fr;gap:12px;align-items:start}
+@media(max-width:700px){.panel2{grid-template-columns:1fr}}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 18px;border-radius:var(--radius-sm);font-size:.85rem;font-weight:700;
+  letter-spacing:.01em;transition:opacity .15s,background .15s;cursor:pointer}
+.btn:active{opacity:.8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--primary);color:#fff;width:100%;border:none}
+.btn-primary:hover:not(:disabled){background:var(--primary-mid)}
+.btn-outline{border:1.5px solid var(--border);color:var(--text-mid);background:var(--surface)}
+.btn-outline:hover{border-color:var(--text)}
+.btn-sm{padding:6px 12px;font-size:.78rem}
+.btn-amber{background:var(--amber);color:#fff;width:100%;border:none}
+.btn-amber:hover:not(:disabled){background:var(--amber-deep)}
+.btn-blue{background:var(--blue);color:#fff;width:100%;border:none}
+.btn-blue:hover:not(:disabled){background:var(--blue-deep)}
+
+/* ── Residuos table ── */
+.res-head{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.res-filters{display:flex;gap:6px;flex-wrap:wrap}
+.res-filters select{width:auto;font-size:.75rem;padding:5px 8px;
+  border:1.5px solid var(--border);border-radius:20px;background:var(--surface);
+  color:var(--text);outline:none}
+.res-filters select:focus{border-color:var(--primary-mid)}
+.tbl-scroll{max-height:400px;overflow-y:auto;border:1px solid var(--border);
+  border-radius:9px}
+.tbl-scroll table{width:100%;border-collapse:collapse;font-size:.78rem;margin:0}
+.tbl-scroll thead{position:sticky;top:0;background:var(--surface);z-index:1}
+.tbl-scroll thead th{text-align:left;font-size:.65rem;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--muted);border-bottom:1.4px solid var(--text);
+  padding:6px 8px;white-space:nowrap}
+.tbl-scroll tbody td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+.tbl-scroll tbody tr:hover{background:var(--surface-2)}
+.chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;
+  font-weight:600;background:var(--surface-2);color:var(--primary);white-space:nowrap}
+.chip-amber{background:var(--amber-tint);color:var(--amber-deep)}
+.chip-blue{background:var(--blue-tint);color:var(--blue-deep)}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;
+  font-size:14px;padding:2px 4px;border-radius:4px;line-height:1}
+.del-btn:hover{color:var(--c-nc);background:rgba(185,28,28,.08)}
+.empty-state{text-align:center;padding:30px 10px;color:var(--muted);font-size:.82rem}
+.totals-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tstat{flex:1;min-width:100px;padding:9px 11px;border-radius:8px;background:var(--surface-2)}
+.tstat.amber{background:var(--amber-tint)}
+.tstat.blue{background:var(--blue-tint)}
+.tstat .v{font-family:monospace;font-weight:700;font-size:.95rem;color:var(--primary)}
+.tstat.amber .v{color:var(--amber-deep)}
+.tstat.blue .v{color:var(--blue-deep)}
+.tstat .k{font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:1px}
+.form-msg{font-size:.75rem;margin-top:8px;color:var(--primary);min-height:14px}
+
+/* ── Captación chart ── */
+.chart-wrap{display:flex;align-items:flex-end;gap:4px;height:180px;
+  padding:8px 2px 0;border-bottom:1.5px solid var(--text)}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bar-val{font-size:.6rem;font-family:monospace;color:var(--blue-deep);margin-bottom:2px;white-space:nowrap}
+.bar{width:65%;min-width:10px;background:linear-gradient(180deg,var(--blue) 0%,var(--blue-deep) 100%);
+  border-radius:3px 3px 0 0;transition:height .3s}
+.bar-labels{display:flex;gap:4px;padding:4px 2px 0}
+.bar-label-col{flex:1;text-align:center;font-size:.58rem;color:var(--muted);text-transform:uppercase}
+
+/* ── Audit module styles (original) ── */
+.week-badge{display:inline-flex;align-items:center;gap:6px;background:var(--primary);
+  color:#fff;border-radius:20px;padding:4px 12px;font-size:.75rem;font-weight:700;letter-spacing:.04em}
+.progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.progress-bar-wrap{height:7px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--primary-lt);border-radius:99px;transition:width .4s}
+.progress-label{font-size:.7rem;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.area-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.area-chip{display:flex;align-items:center;gap:6px;background:var(--surface);
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 9px 9px 11px;
+  font-size:.76rem;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s;position:relative}
+.area-chip:hover{border-color:var(--primary-mid);background:var(--surface-2)}
+.area-chip.done{border-color:var(--c-ok)}
+.area-chip .score-mini{font-size:.65rem;color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
+.area-chip .chip-del{flex-shrink:0;width:20px;height:20px;border-radius:50%;
+  background:#FEE2E2;color:#B91C1C;font-size:10px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .15s;border:none;cursor:pointer;line-height:1}
+.area-chip:hover .chip-del{opacity:1}
+.area-chip.done .chip-del{opacity:.6}
+.area-chip.done .chip-del:hover{opacity:1}
+.checklist-item{border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:11px;margin-bottom:7px;background:var(--surface);transition:border-color .15s}
+.checklist-item.answered{border-color:var(--primary-lt)}
+.checklist-item.nc-item{border-color:#FCA5A5}
+.item-header{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.bin-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0}
+.item-label{font-size:.82rem;font-weight:600;line-height:1.3;flex:1}
+.radio-group{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.radio-opt{position:relative}
+.radio-opt input[type="radio"]{position:absolute;opacity:0;width:0;height:0}
+.radio-opt label{display:flex;align-items:center;justify-content:center;padding:6px 4px;
+  border-radius:5px;border:1.5px solid var(--border);font-size:.68rem;font-weight:700;
+  letter-spacing:.02em;cursor:pointer;transition:all .12s;text-align:center;
+  line-height:1.2;color:var(--muted);background:var(--bg)}
+.radio-opt input:checked+label.conforme{background:#DCFCE7;border-color:#16A34A;color:#15803D}
+.radio-opt input:checked+label.nc{background:#FEE2E2;border-color:#DC2626;color:#B91C1C}
+.radio-opt input:checked+label.na{background:var(--surface-2);border-color:var(--muted);color:var(--muted)}
+:root[data-theme="dark"] .radio-opt input:checked+label.conforme{background:#14532D;border-color:#4ADE80;color:#4ADE80}
+:root[data-theme="dark"] .radio-opt input:checked+label.nc{background:#450A0A;border-color:#F87171;color:#F87171}
+.photo-zone{margin-top:9px;padding:9px;border:1.5px dashed var(--border);
+  border-radius:var(--radius-sm);background:var(--bg)}
+.photo-zone-label{font-size:.68rem;color:var(--muted);font-weight:600;margin-bottom:7px;display:block}
+.photo-upload-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;
+  background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-size:.75rem;font-weight:600;cursor:pointer;color:var(--text-mid);transition:border-color .15s}
+.photo-upload-btn:hover{border-color:var(--primary-mid)}
+.photo-upload-btn input[type="file"]{display:none}
+.photo-preview-wrap{margin-top:7px;position:relative;display:inline-block}
+.photo-preview{width:84px;height:84px;object-fit:cover;border-radius:7px;border:2px solid var(--border);display:block}
+.photo-remove{position:absolute;top:-5px;right:-5px;width:18px;height:18px;
+  border-radius:50%;background:#B91C1C;color:#fff;font-size:10px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  border:2px solid var(--surface);line-height:1}
+.photo-comment{width:100%;margin-top:9px;padding:7px 9px;
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--surface);resize:vertical;color:var(--text);
+  font:inherit;font-size:.75rem;line-height:1.4;display:block}
+.photo-comment:focus{outline:none;border-color:var(--primary-mid)}
+.photo-comment-label{font-size:.68rem;color:var(--muted);font-weight:600;display:block;margin-top:7px;margin-bottom:2px}
+.upload-spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.score-circle{position:relative;width:110px;height:110px}
+.score-circle svg{width:110px;height:110px;transform:rotate(-90deg)}
+.score-circle .track{fill:none;stroke:var(--border);stroke-width:10}
+.score-circle .fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .6s ease}
+.score-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.score-pct{font-size:1.6rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.ind-filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.ind-filter-row select{padding:7px 11px;border-radius:20px;border:1.5px solid var(--border);
+  background:var(--surface);font-size:.78rem;font-weight:600;color:var(--text);outline:none}
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}
+.stat-tile{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:11px 9px;text-align:center}
+.stat-tile .val{font-size:1.35rem;font-weight:800;line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--primary)}
+.stat-tile .key{font-size:.62rem;color:var(--muted);font-weight:600;
+  text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
+.bar-chart{display:flex;flex-direction:column;gap:7px}
+.bar-row{display:flex;align-items:center;gap:7px}
+.bar-name{font-size:.7rem;font-weight:600;color:var(--text-mid);min-width:110px;max-width:130px;line-height:1.2}
+.bar-track{flex:1;height:20px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:7px;
+  font-size:.67rem;font-weight:700;color:#fff;transition:width .5s ease;min-width:32px;font-variant-numeric:tabular-nums}
+.bar-pct{font-size:.7rem;font-weight:700;min-width:36px;text-align:right;font-variant-numeric:tabular-nums}
+.audit-row{display:flex;align-items:center;gap:9px;padding:11px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);margin-bottom:7px}
+.audit-row .area-name{font-size:.82rem;font-weight:700;flex:1}
+.audit-row .meta{font-size:.68rem;color:var(--muted)}
+.audit-row .score-badge{padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:800;font-variant-numeric:tabular-nums}
+.score-hi{background:#DCFCE7;color:#15803D}
+.score-md{background:#FEF9C3;color:#854D0E}
+.score-lo{background:#FEE2E2;color:#B91C1C}
+:root[data-theme="dark"] .score-hi{background:#14532D;color:#4ADE80}
+:root[data-theme="dark"] .score-md{background:#422006;color:#FCD34D}
+:root[data-theme="dark"] .score-lo{background:#450A0A;color:#F87171}
+.audit-row .del-btn-a{color:var(--muted);font-size:15px;padding:3px;border-radius:4px;transition:color .12s}
+.audit-row .del-btn-a:hover{color:var(--c-nc)}
+.audit-row-actions{display:flex;gap:5px;align-items:center}
+.section-title{font-size:1rem;font-weight:800;letter-spacing:-.01em;color:var(--text);margin-bottom:3px}
+.section-sub{font-size:.78rem;color:var(--muted);margin-bottom:14px}
+.bin-legend{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}
+.bin-tag{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;
+  font-size:.68rem;font-weight:700;border:1.5px solid;color:#fff}
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:var(--bg);padding:9px 18px;border-radius:20px;
+  font-size:.8rem;font-weight:600;z-index:100;opacity:0;pointer-events:none;
+  transition:opacity .2s;white-space:nowrap}
+.toast.show{opacity:1}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:.8rem;font-weight:600;
+  color:var(--primary);margin-bottom:14px;padding:4px 0}
+.back-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;
+  stroke-linecap:round;stroke-linejoin:round}
+.step-header{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.step-area-name{font-size:1.05rem;font-weight:800;flex:1}
+.tip{background:var(--surface-2);border-left:3px solid var(--primary-lt);
+  border-radius:0 6px 6px 0;padding:7px 11px;font-size:.75rem;color:var(--text-mid);margin-bottom:12px}
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);
+  display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:14px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--surface);border-radius:var(--radius);width:100%;
+  max-width:680px;margin:auto;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between}
+.modal-close{font-size:19px;color:var(--muted);padding:4px 7px;border-radius:5px}
+.modal-close:hover{background:var(--surface-2)}
+.modal-body{padding:18px}
+.rpt-header{border-bottom:3px solid #1A5C38;padding-bottom:14px;margin-bottom:18px}
+.rpt-logo{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.rpt-logo-mark{width:34px;height:34px;border-radius:7px;background:#1A5C38;display:flex;align-items:center;justify-content:center;font-size:17px}
+.rpt-brand{font-size:.72rem;font-weight:700;color:#1A5C38;text-transform:uppercase;letter-spacing:.08em}
+.rpt-title{font-size:1.3rem;font-weight:800;color:#162B1E;letter-spacing:-.01em;margin-bottom:10px}
+.rpt-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.rpt-meta-cell{padding:7px 11px;background:#F2F8F4;border-radius:7px}
+.rpt-meta-key{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6D8576}
+.rpt-meta-val{font-size:.85rem;font-weight:700;color:#162B1E;margin-top:2px}
+.rpt-score-bar{display:flex;align-items:center;gap:11px;margin:14px 0;padding:11px 14px;border-radius:9px;border:1.5px solid #C8E0D0;background:#F2F8F4}
+.rpt-score-num{font-size:1.9rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
+.rpt-score-label{font-size:.68rem;color:#6D8576;font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.rpt-section-title{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#6D8576;margin:18px 0 9px}
+.rpt-item{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid #EAF3ED}
+.rpt-item:last-child{border-bottom:none}
+.rpt-item-label{flex:1;font-size:.82rem;font-weight:600;color:#162B1E;line-height:1.3}
+.rpt-item-badge{padding:3px 11px;border-radius:20px;font-size:.68rem;font-weight:800;white-space:nowrap;flex-shrink:0}
+.rpt-conforme{background:#DCFCE7;color:#15803D}
+.rpt-nc{background:#FEE2E2;color:#B91C1C}
+.rpt-na{background:#F1F5F9;color:#64748B}
+.rpt-obs{margin-top:14px;padding:11px;background:#F2F8F4;border-radius:7px;font-size:.8rem;color:#3D5446;font-style:italic}
+.rpt-obs-label{font-weight:700;font-style:normal;color:#162B1E;display:block;margin-bottom:3px}
+.rpt-footer{margin-top:22px;padding-top:11px;border-top:1px solid #C8E0D0;font-size:.65rem;color:#6D8576;text-align:center}
+.rpt-media-all{display:flex;flex-wrap:wrap;gap:11px}
+.rpt-photo-wrap{text-align:center;max-width:130px}
+.rpt-photo{width:110px;height:110px;object-fit:cover;border-radius:7px;border:1.5px solid #C8E0D0;display:block}
+.rpt-photo-caption{font-size:.6rem;color:#6D8576;margin-top:3px}
+.rpt-photo-cmt{font-size:.68rem;color:#3D5446;margin-top:3px;font-style:italic;line-height:1.3;word-break:break-word}
+@media print{
+  .modal-overlay{position:static!important;background:none!important;padding:0!important}
+  .modal-box{box-shadow:none!important;border-radius:0!important}
+  .modal-header{display:none!important}
+  body>*:not(.modal-overlay){display:none!important}
+  .modal-overlay{display:block!important}
+  .print-btn,.modal-close{display:none!important}
+}
+/* ── Localidad tabs ── */
+.loc-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.loc-tab{padding:5px 12px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.02em;
+  border:1.5px solid var(--border);background:var(--surface);color:var(--muted);transition:all .12s;cursor:pointer}
+.loc-tab:hover{border-color:var(--primary-mid);color:var(--primary)}
+.loc-tab.active{background:var(--primary);border-color:var(--primary);color:#fff}
+/* ── Subsection header ── */
+.subsec-header{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--muted);margin:12px 0 6px;padding:4px 8px;background:var(--surface-2);
+  border-radius:5px;border-left:3px solid var(--primary-lt)}
+/* ── CA strip button ── */
+.ca-strip-btn{width:100%;padding:5px 8px;border-radius:5px;background:var(--amber-tint);
+  border:1px solid var(--amber-border);color:var(--amber-deep);font-size:.68rem;font-weight:700;
+  cursor:pointer;text-align:left;transition:background .12s}
+.ca-strip-btn:hover{background:#f0d4ad}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="loginOverlay">
+  <div style="width:100%;max-width:340px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:48px;margin-bottom:10px">🌿</div>
+      <div style="font-size:1.4rem;font-weight:800;color:var(--text);letter-spacing:-.01em">Plantabal</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-top:3px">Ambiental &amp; Segregación</div>
+    </div>
+    <div class="card">
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="loginEmail" placeholder="correo@3acomposites.com" autocomplete="email">
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Contraseña</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="loginError" style="display:none;color:#B91C1C;font-size:.75rem;font-weight:600;
+        margin-bottom:10px;text-align:center;padding:7px;background:#FEE2E2;border-radius:6px"></div>
+      <button class="btn btn-primary" id="loginBtn">Ingresar</button>
+    </div>
+    <p style="text-align:center;font-size:.68rem;color:var(--muted);margin-top:14px">Sistema interno · Plantabal SST</p>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<header class="app-header">
+  <div class="brand">
+    <div class="logo-mark">🌿</div>
+    <div>
+      <div style="font-size:.85rem;font-weight:700;line-height:1.1">Plantabal</div>
+      <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Ambiental &amp; SST</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:5px">
+    <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema">🌙</button>
+    <button class="logout-btn-hdr" id="logoutBtn" title="Cerrar sesión">🚪 Salir</button>
+  </div>
+</header>
+
+<!-- ══════════════ PAGE: AUDITORÍA ══════════════ -->
+<div class="page active" id="page-auditoria">
+  <div id="home-view">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+        <div>
+          <div class="section-title">Semana en curso</div>
+          <div style="font-size:.75rem;color:var(--muted)" id="week-range-label"></div>
+        </div>
+        <div class="week-badge" id="week-badge-label"></div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Cambiar semana</label>
+        <input type="week" id="weekPicker">
+      </div>
+    </div>
+    <div class="card">
+      <div class="progress-header">
+        <div class="card-title" style="margin-bottom:0">Áreas auditadas</div>
+        <div class="progress-label"><span id="done-count">0</span> / <span id="total-count">22</span></div>
+      </div>
+      <div class="progress-bar-wrap" style="margin-top:7px">
+        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div class="bin-legend" style="margin-top:10px">
+        <span class="bin-tag" style="background:var(--bin-negro);border-color:#333">⬛ Común</span>
+        <span class="bin-tag" style="background:var(--bin-azul);border-color:#1D4ED8">🔵 Plástico</span>
+        <span class="bin-tag" style="background:var(--bin-verde);border-color:#15803D">🟢 Orgánico</span>
+        <span class="bin-tag" style="background:var(--bin-gris);border-color:#71717A">⬜ Cartón</span>
+        <span class="bin-tag" style="background:var(--bin-rojo);border-color:#B91C1C">🔴 Peligroso</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="field" style="margin-bottom:0">
+        <label>Inspector</label>
+        <input type="text" id="inspectorInput" placeholder="Nombre del inspector">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Selecciona un área para auditar</div>
+      <div class="loc-tabs" id="locTabs"></div>
+      <div id="areaGrid"></div>
+    </div>
+  </div>
+  <div id="checklist-view" style="display:none">
+    <button class="back-btn" id="backBtn">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Volver a áreas
+    </button>
+    <div class="step-header">
+      <div>
+        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px">Área</div>
+        <div class="step-area-name" id="cl-area-name"></div>
+      </div>
+      <div style="display:flex;justify-content:center">
+        <div class="score-circle" style="width:58px;height:58px">
+          <svg viewBox="0 0 110 110" style="width:58px;height:58px">
+            <circle class="track" cx="55" cy="55" r="48"/>
+            <circle class="fill" id="mini-circle" cx="55" cy="55" r="48"
+              stroke="#4DB87A" stroke-dasharray="301.6" stroke-dashoffset="301.6"/>
+          </svg>
+          <div class="score-center">
+            <div style="font-size:.82rem;font-weight:800;font-variant-numeric:tabular-nums" id="mini-pct">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tip">Marca <strong>No Aplica</strong> si el área no cuenta con ese cubeto. Cuando un ítem es <strong>No Conforme</strong>, adjunta una foto.</div>
+    <div id="checklist-items"></div>
+    <div style="margin-top:14px">
+      <div class="field">
+        <label>Observaciones generales (opcional)</label>
+        <textarea id="obs-field" rows="2" style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);resize:vertical;color:var(--text)" placeholder="Anotaciones adicionales..."></textarea>
+      </div>
+      <button class="btn btn-primary" id="saveAuditBtn">Guardar auditoría</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE: PELIGROSOS ══════════════ -->
+<div class="page" id="page-peligrosos">
+  <div class="section-title" style="margin-bottom:3px">☣️ Desechos Peligrosos</div>
+  <div class="section-sub">GE-GA-R5 · Bitácora de desechos peligrosos</div>
+  <div class="panel2">
+    <div>
+      <div class="card">
+        <div class="card-title">☣️ Nuevo registro</div>
+        <div class="field">
+          <label>Localidad</label>
+          <select id="p_localidad">
+            <option>Forestal</option><option>Planta Quevedo</option>
+            <option>PGS</option><option>Planta SD</option>
+          </select>
+        </div>
+        <div class="field"><label>Fecha</label><input type="date" id="p_fecha"></div>
+        <div class="field">
+          <label>Área</label>
+          <input type="text" id="p_area" placeholder="Ej. Mantenimiento, Bodega...">
+        </div>
+        <div class="field">
+          <label>Tipo de desecho</label>
+          <select id="p_tipo">
+            <option value="C.18.06">C.18.06 · Substratos, resinas, foto polímeros</option>
+            <option value="ES-04">ES-04 · Neumáticos usados</option>
+            <option value="ES-06">ES-06 · Equipos eléctricos/electrónicos en desuso</option>
+            <option value="H.52.02">H.52.02 · Sólidos contaminados con mat. peligrosos</option>
+            <option value="NE-07">NE-07 · Baterías plomo-ácido usadas</option>
+            <option value="NE-08">NE-08 · Baterías usadas</option>
+            <option value="NE-10">NE-10 · Desechos biopeligrosos de atención médica</option>
+            <option value="NE-27">NE-27 · Envases contaminados con mat. peligrosos</option>
+            <option value="NE-29">NE-29 · Envases y contenedores vacíos</option>
+            <option value="NE-30">NE-30 · EPP contaminado con mat. peligrosos</option>
+            <option value="NE-32">NE-32 · Filtros usados de aceite mineral</option>
+            <option value="NE-37">NE-37 · Lodos de tratamiento de aguas residuales</option>
+            <option value="NE-40">NE-40 · Luminarias/tubos fluorescentes con mercurio</option>
+            <option value="NE-42">NE-42 · Absorbente contaminado con hidrocarburos</option>
+            <option value="NE-45">NE-45 · Mezclas oleosas / emulsiones hidrocarburo-agua</option>
+            <option value="NE-48">NE-48 · Productos químicos caducados</option>
+            <option value="NE-49">NE-49 · Tintas, pinturas, resinas peligrosas</option>
+            <option value="NE-52">NE-52 · Suelos contaminados con mat. peligrosos</option>
+            <option value="NE-53">NE-53 · Cartuchos de tinta o tóner usados</option>
+          </select>
+        </div>
+        <div class="field"><label>Peso (kg)</label><input type="number" step="0.1" min="0" id="p_peso" placeholder="0.0"></div>
+        <div class="field">
+          <label>Técnico que recibe</label>
+          <input type="text" id="p_tecnico" placeholder="Nombre" list="tecnicos-p">
+          <datalist id="tecnicos-p">
+            <option>Viviana</option><option>Érika</option><option>Joel</option>
+            <option>Kevin</option><option>Debbie</option><option>Frank</option>
+          </datalist>
+        </div>
+        <button class="btn btn-amber" id="p_submit" style="margin-top:6px">Guardar registro</button>
+        <div class="form-msg" id="p_msg" style="color:var(--amber-deep)"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="res-head">
+          <div class="res-filters">
+            <select id="p_fLoc" onchange="renderPeligrosos()">
+              <option value="">Todas las localidades</option>
+              <option>Forestal</option><option>Planta Quevedo</option>
+              <option>PGS</option><option>Planta SD</option>
+            </select>
+            <select id="p_fMes" onchange="renderPeligrosos()">
+              <option value="">Todos los meses</option>
+            </select>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV('peligrosos')">⬇ CSV</button>
+        </div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr>
+              <th>Fecha</th><th>Mes</th><th>Localidad</th><th>Área</th>
+              <th>Código</th><th>Kg</th><th>Técnico</th><th></th>
+            </tr></thead>
+            <tbody id="p_tbody"></tbody>
+          </table>
+          <div class="empty-state" id="p_empty">Aún no hay registros.</div>
+        </div>
+        <div class="totals-strip" id="p_totals"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE: RECICLAJE ══════════════ -->
+<div class="page" id="page-reciclaje">
+  <div class="section-title" style="margin-bottom:3px">♻️ Reciclaje y Comunes</div>
+  <div class="section-sub">GE-GA-R9 · Registro de residuos comunes y reciclables</div>
+  <div class="panel2">
+    <div>
+      <div class="card">
+        <div class="card-title">♻️ Nuevo registro</div>
+        <div class="field">
+          <label>Localidad</label>
+          <select id="r_localidad">
+            <option>Planta Quevedo</option><option>Planta S.D.</option>
+          </select>
+        </div>
+        <div class="field"><label>Fecha</label><input type="date" id="r_fecha"></div>
+        <div class="field">
+          <label>Tipo de residuo</label>
+          <select id="r_tipo">
+            <option>Reciclable Cartón</option><option>Reciclable PET</option>
+            <option>Reciclable Chatarra</option><option>Desechos Comunes</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field" style="margin-bottom:0">
+            <label>Peso (kg)</label>
+            <input type="number" step="0.1" min="0" id="r_peso" placeholder="0.0">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Destino</label>
+            <select id="r_destino">
+              <option>Recolector Municipal</option><option>El Gato</option>
+              <option>R. Modelo</option><option>García</option><option>Novared</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label>Técnico que registra</label>
+          <input type="text" id="r_tecnico" placeholder="Nombre" list="tecnicos-r">
+          <datalist id="tecnicos-r">
+            <option>Viviana</option><option>Érika</option><option>Joel</option>
+            <option>Kevin</option><option>Debbie</option><option>Frank</option>
+          </datalist>
+        </div>
+        <div class="field">
+          <label>Observaciones (opcional)</label>
+          <input type="text" id="r_obs" placeholder="Notas...">
+        </div>
+        <button class="btn btn-primary" id="r_submit" style="margin-top:6px">Guardar registro</button>
+        <div class="form-msg" id="r_msg"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="res-head">
+          <div class="res-filters">
+            <select id="r_fLoc" onchange="renderReciclaje()">
+              <option value="">Todas las localidades</option>
+              <option>Planta Quevedo</option><option>Planta S.D.</option>
+            </select>
+            <select id="r_fTipo" onchange="renderReciclaje()">
+              <option value="">Todos los tipos</option>
+              <option>Reciclable Cartón</option><option>Reciclable PET</option>
+              <option>Reciclable Chatarra</option><option>Desechos Comunes</option>
+            </select>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV('reciclaje')">⬇ CSV</button>
+        </div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr>
+              <th>Fecha</th><th>Localidad</th><th>Tipo</th><th>Kg</th>
+              <th>Destino</th><th>Técnico</th><th></th>
+            </tr></thead>
+            <tbody id="r_tbody"></tbody>
+          </table>
+          <div class="empty-state" id="r_empty">Aún no hay registros.</div>
+        </div>
+        <div class="totals-strip" id="r_totals"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE: CAPTACIÓN ══════════════ -->
+<div class="page" id="page-captacion">
+  <div class="section-title" style="margin-bottom:3px">💧 Captación de Agua</div>
+  <div class="section-sub">Lectura de caudalímetro por punto de captación</div>
+  <div class="panel2">
+    <div>
+      <div class="card">
+        <div class="card-title">💧 Nueva lectura mensual</div>
+        <div class="field">
+          <label>Punto de captación</label>
+          <select id="a_punto">
+            <option>Pozo Genética</option><option>Pozo Silvicultura</option>
+            <option>Pozo Comedor</option><option>Pozo Caldero</option>
+            <option>Captación Estero G</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field" style="margin-bottom:0"><label>Año</label><select id="a_anio"></select></div>
+          <div class="field" style="margin-bottom:0"><label>Mes</label><select id="a_mes"></select></div>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label>Lectura del caudalímetro (m³)</label>
+          <input type="number" step="0.01" min="0" id="a_lectura" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label>Técnico que registra</label>
+          <input type="text" id="a_tecnico" placeholder="Nombre" list="tecnicos-a">
+          <datalist id="tecnicos-a">
+            <option>Viviana</option><option>Érika</option><option>Joel</option>
+            <option>Kevin</option><option>Debbie</option><option>Frank</option>
+          </datalist>
+        </div>
+        <div class="field">
+          <label>Observaciones (opcional)</label>
+          <textarea id="a_obs" placeholder="Notas..."></textarea>
+        </div>
+        <button class="btn btn-blue" id="a_submit" style="margin-top:6px">Guardar lectura</button>
+        <div class="form-msg" id="a_msg" style="color:var(--blue-deep)"></div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:5px;line-height:1.4">
+          Si ya existe una lectura para ese punto, año y mes, se actualizará. El consumo mensual se calcula como diferencia con el mes anterior.
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="res-head">
+          <div class="res-filters">
+            <select id="a_fPunto" onchange="renderCaptacion()">
+              <option value="">Todos los puntos</option>
+              <option>Pozo Genética</option><option>Pozo Silvicultura</option>
+              <option>Pozo Comedor</option><option>Pozo Caldero</option>
+              <option>Captación Estero G</option>
+            </select>
+            <select id="a_fAnio" onchange="renderCaptacion()"><option value="">Todos los años</option></select>
+            <select id="a_fMes" onchange="renderCaptacion()"><option value="">Todos los meses</option></select>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV('captacion')">⬇ CSV</button>
+        </div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr>
+              <th>Año</th><th>Mes</th><th>Punto</th><th>Lectura (m³)</th>
+              <th>Consumo (m³)</th><th>Técnico</th><th></th>
+            </tr></thead>
+            <tbody id="a_tbody"></tbody>
+          </table>
+          <div class="empty-state" id="a_empty">Aún no hay lecturas.</div>
+        </div>
+        <div class="totals-strip" id="a_totals"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <div>
+            <div class="card-title" style="margin-bottom:2px">Dashboard mensual</div>
+            <div style="font-size:.7rem;color:var(--muted)">Consumo m³ por mes</div>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <select id="a_dashPunto" onchange="renderDashboard()" style="font-size:.75rem;padding:5px 8px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text);outline:none">
+              <option value="">Todos los puntos</option>
+              <option>Pozo Genética</option><option>Pozo Silvicultura</option>
+              <option>Pozo Comedor</option><option>Pozo Caldero</option>
+              <option>Captación Estero G</option>
+            </select>
+            <select id="a_dashAnio" onchange="renderDashboard()" style="font-size:.75rem;padding:5px 8px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text);outline:none"></select>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:monospace;font-weight:700;font-size:1.1rem;color:var(--blue-deep)" id="a_dashTotal">0.0 m³</div>
+            <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Total del año</div>
+          </div>
+        </div>
+        <div class="chart-wrap" id="a_chart"></div>
+        <div class="bar-labels" id="a_chartLabels"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE: INDICADORES ══════════════ -->
+<div class="page" id="page-indicadores">
+  <div class="section-title" style="margin-bottom:3px">Indicadores</div>
+  <div class="section-sub">Resultados de auditoría de segregación por área y semana</div>
+  <div class="ind-filter-row">
+    <select id="ind-week-filter"><option value="">Todas las semanas</option></select>
+    <select id="ind-area-filter"><option value="">Todas las áreas</option></select>
+  </div>
+  <div class="stat-row">
+    <div class="stat-tile"><div class="val" id="st-general">—</div><div class="key">General</div></div>
+    <div class="stat-tile"><div class="val" id="st-areas">—</div><div class="key">Áreas</div></div>
+    <div class="stat-tile"><div class="val" id="st-audits">—</div><div class="key">Auditorías</div></div>
+  </div>
+  <div class="card" style="margin-bottom:10px">
+    <div class="card-title">Puntaje por área</div>
+    <div class="bar-chart" id="bar-chart-areas"></div>
+    <div class="empty-state" id="no-data-msg" style="display:none;padding:18px 0"><p>📊 No hay datos aún.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Cumplimiento por criterio</div>
+    <div class="bar-chart" id="bar-chart-items"></div>
+    <div class="empty-state" id="no-data-items" style="display:none;padding:18px 0"><p>📋 Sin datos.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE: HISTORIAL ══════════════ -->
+<div class="page" id="page-historial">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+    <div class="section-title">Historial</div>
+    <button class="btn btn-outline btn-sm" id="exportBtn">⬇ Excel</button>
+  </div>
+  <div class="section-sub">Registro de todas las auditorías de segregación</div>
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-title" style="margin-bottom:7px">💾 Copia de seguridad</div>
+    <p style="font-size:.75rem;color:var(--muted);margin-bottom:10px;line-height:1.5">Exporta los datos como respaldo o impórtalos desde otro dispositivo.</p>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" id="backupBtn" style="flex:1">📤 Exportar datos</button>
+      <label class="btn btn-outline btn-sm" style="flex:1;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+        📥 Importar datos<input type="file" id="restoreInput" accept=".json" style="display:none">
+      </label>
+    </div>
+    <div id="restore-status" style="margin-top:7px;font-size:.72rem;color:var(--primary);display:none;font-weight:600"></div>
+  </div>
+  <div class="ind-filter-row" style="margin-bottom:10px">
+    <select id="hist-week-filter"><option value="">Todas las semanas</option></select>
+    <select id="hist-area-filter"><option value="">Todas las áreas</option></select>
+  </div>
+  <div id="historial-list"></div>
+</div>
+
+<!-- ── MODAL INFORME ── -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span style="font-size:.82rem;font-weight:700;color:var(--text)">Informe de Auditoría</span>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-outline btn-sm print-btn" onclick="window.print()">🖨 Imprimir</button>
+        <button class="modal-close" id="closeReport">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="report-body"></div>
+  </div>
+</div>
+
+<!-- ── MODAL ACCIÓN CORRECTIVA ── -->
+<div class="modal-overlay" id="caModal">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <span style="font-size:.82rem;font-weight:700;color:var(--text)">⚠️ Acción Correctiva</span>
+      <button class="modal-close" id="caModalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:12px">
+        Área: <strong id="ca-area-name"></strong> · <strong id="ca-week-label"></strong>
+      </div>
+      <div class="field">
+        <label>Descripción de la acción correctiva</label>
+        <textarea id="ca-desc" rows="3" style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);resize:vertical;color:var(--text)" placeholder="Describe la acción tomada para corregir el incumplimiento..."></textarea>
+      </div>
+      <div class="field">
+        <label>Responsable</label>
+        <input type="text" id="ca-responsable" placeholder="Nombre del responsable">
+      </div>
+      <div class="field" style="margin-bottom:6px">
+        <label>Evidencia fotográfica (opcional)</label>
+        <label class="photo-upload-btn" style="display:inline-flex">
+          📷 Adjuntar foto
+          <input type="file" id="ca-photo-input" accept="image/*" capture="environment" style="display:none">
+        </label>
+        <div id="ca-photo-preview"></div>
+      </div>
+      <button class="btn btn-primary" id="ca-save-btn" style="margin-top:10px">Guardar acción correctiva</button>
+      <div class="form-msg" id="ca-msg" style="margin-top:6px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── NAV ── -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-tab active" onclick="switchPage('page-auditoria',this,'')">
+    <span class="icon">📋</span>Auditoría
+  </button>
+  <button class="nav-tab" onclick="switchPage('page-peligrosos',this,'amber')">
+    <span class="icon">☣️</span>Peligrosos
+  </button>
+  <button class="nav-tab" onclick="switchPage('page-reciclaje',this,'')">
+    <span class="icon">♻️</span>Reciclaje
+  </button>
+  <button class="nav-tab" onclick="switchPage('page-captacion',this,'blue')">
+    <span class="icon">💧</span>Captación
+  </button>
+  <button class="nav-tab" onclick="switchPage('page-indicadores',this,'')">
+    <span class="icon">📊</span>Indicadores
+  </button>
+  <button class="nav-tab" onclick="switchPage('page-historial',this,'')">
+    <span class="icon">🗂</span>Historial
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<script>
+// ══ FIREBASE CONFIG ══
+const firebaseConfig = {
+  apiKey:            "AIzaSyB7JSmnk1Pr1nkbxgHwDEKE5MtDNTO0m7E",
+  authDomain:        "auditoria-de-segregacion.firebaseapp.com",
+  projectId:         "auditoria-de-segregacion",
+  storageBucket:     "auditoria-de-segregacion.firebasestorage.app",
+  messagingSenderId: "667238935996",
+  appId:             "1:667238935996:web:649aadde8dcb698b1bcfb9"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+// ══ CONSTANTS ══
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const PUNTOS_AGUA = ["Pozo Genética","Pozo Silvicultura","Pozo Comedor","Pozo Caldero","Captación Estero G"];
+const ANIOS_AGUA  = [2024,2025,2026,2027,2028,2029,2030];
+const LOCALIDADES = {
+  'Planta Quevedo': {
+    'Administrativo': [
+      'OFICINA DE ADMINISTRACIÓN','DISPENSARIO MÉDICO','OFICINA DE MANTENIMIENTO',
+      'OFICINA DE IT','OFICINA DE MADERA VERDE','OFICINA DE SECADO',
+      'OFICINA DE VIVERO','OFICINA DE GENÉTICA','OFICINA DE PRODUCCIÓN',
+      'OFICINA DE CALIDAD','TOLA','OFICINA DE COMPRAS',
+      'OFICINA DE SILVICULTURA','LABORATORIO','AUDITORIO DE LABORATORIO'
+    ],
+    'Operativo': [
+      'MADERA VERDE','CALDERO','TALLER','ENCOLAJE','D-100',
+      'CK-EMBARQUE','BODEGA','ASERRÍO','PTAR',
+      'BODEGA DESECHOS COMUNES','BODEGA DESECHOS PELIGROSOS','BODEGA RECICLABLES'
+    ]
+  },
+  'Forestal': {
+    'Áreas': ['COSECHA NORTE','COSECHA SUR','PLANTACIONES SUR','PLANTACIONES NORTE','PLANTACIONES CENTRO']
+  },
+  'Planta S.D.': {
+    'Áreas': ['TALLER','ENCOLAJE','CALDERO','ADM','MADERA VERDE','KTB','PTAR','BODEGA']
+  },
+  'PGS': { 'Áreas': ['PGS1','PGS2'] },
+  'Samborondón': { 'Áreas': ['OFICINA DE IT','OFICINA DE FINANZAS'] }
+};
+const ALL_AREAS = Object.values(LOCALIDADES).flatMap(secs => Object.values(secs).flat());
+const ITEMS = [
+  { id:'negro',     label:'Desechos comunes clasificados correctamente',       color:'#1C1C1C' },
+  { id:'azul',      label:'Plásticos reciclables clasificados correctamente',  color:'#1D4ED8' },
+  { id:'verde',     label:'Residuos orgánicos clasificados correctamente',     color:'#15803D' },
+  { id:'gris',      label:'Cartón / papel clasificado correctamente',          color:'#71717A' },
+  { id:'rojo',      label:'Residuos peligrosos clasificados correctamente',    color:'#B91C1C' },
+  { id:'etiquetas', label:'Recipientes correctamente etiquetados',             color:null },
+  { id:'volumen',   label:'Recipientes con volumen adecuado',                 color:null },
+];
+const ITEM_LABELS_SHORT = {
+  negro:'Común (⬛)', azul:'Plástico (🔵)', verde:'Orgánico (🟢)',
+  gris:'Cartón (⬜)', rojo:'Peligroso (🔴)', etiquetas:'Etiquetado', volumen:'Volumen'
+};
+const CODIGOS_P = {
+  "C.18.06":"Desechos de substratos, resinas, foto polímeros",
+  "ES-04":"Neumáticos usados o partes de los mismos",
+  "ES-06":"Equipos eléctricos y electrónicos en desuso",
+  "H.52.02":"Desechos sólidos contaminados con materiales peligrosos",
+  "NE-07":"Baterías usadas plomo-ácido","NE-08":"Baterías usadas",
+  "NE-10":"Desechos biopeligrosos activos de atención médica",
+  "NE-27":"Envases contaminados con materiales peligrosos",
+  "NE-29":"Envases y contenedores vacíos",
+  "NE-30":"EPP contaminado con materiales peligrosos",
+  "NE-32":"Filtros usados de aceite mineral",
+  "NE-37":"Lodos de tratamiento de aguas residuales domésticas",
+  "NE-40":"Luminarias, tubos fluorescentes con mercurio",
+  "NE-42":"Material absorbente contaminado con hidrocarburos",
+  "NE-45":"Mezclas oleosas, emulsiones de hidrocarburos-agua",
+  "NE-48":"Productos químicos caducados o fuera de especificaciones",
+  "NE-49":"Residuos de tintas, pinturas, resinas peligrosas",
+  "NE-52":"Suelos contaminados con materiales peligrosos",
+  "NE-53":"Cartuchos de impresión de tinta o tóner usados"
+};
+
+// ══ CACHES ══
+let auditsCache      = [];
+let peligrosoCache   = [];
+let reciclajeCache   = [];
+let captacionCache   = [];
+let fsUnsub = null, pUnsub = null, rUnsub = null, aUnsub = null;
+
+// ══ UTILS ══
+function uid() { return 'x' + Date.now() + Math.random().toString(16).slice(2,7); }
+function todayISO() { return new Date().toISOString().slice(0,10); }
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function mesFromISO(iso) {
+  if (!iso) return '';
+  return MESES[parseInt(iso.split('-')[1],10)-1] || '';
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ══ THEME ══
+let theme = localStorage.getItem('pb_theme') || 'light';
+document.documentElement.setAttribute('data-theme', theme);
+document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
+document.getElementById('themeBtn').addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('pb_theme', theme);
+});
+
+// ══ ROUTING ══
+function switchPage(id, btn, accent) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.remove('active','active-amber','active-blue');
+  });
+  document.getElementById(id).classList.add('active');
+  if (accent === 'amber') btn.classList.add('active-amber');
+  else if (accent === 'blue') btn.classList.add('active-blue');
+  else btn.classList.add('active');
+  if (id === 'page-indicadores') renderIndicadores();
+  if (id === 'page-historial')   renderHistorial();
+  if (id === 'page-peligrosos')  renderPeligrosos();
+  if (id === 'page-reciclaje')   renderReciclaje();
+  if (id === 'page-captacion')   { renderCaptacion(); renderDashboard(); }
+}
+
+// ══ AUTH ══
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('loginBtn');
+  if (!email || !pass) return;
+  btn.disabled = true; btn.textContent = 'Ingresando...';
+  errEl.style.display = 'none';
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(e) {
+    errEl.textContent = 'Correo o contraseña incorrectos';
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Ingresar';
+  }
+});
+document.getElementById('loginPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('loginBtn').click();
+});
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  if (!confirm('¿Cerrar sesión?')) return;
+  [fsUnsub,pUnsub,rUnsub,aUnsub].forEach(u => u && u());
+  auditsCache = []; peligrosoCache = []; reciclajeCache = []; captacionCache = [];
+  await auth.signOut();
+});
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'flex';
+    const saved = localStorage.getItem('pb_inspector');
+    if (saved) document.getElementById('inspectorInput').value = saved;
+    initAll();
+    checkQRParam();
+  } else {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('loginBtn').disabled = false;
+    document.getElementById('loginBtn').textContent = 'Ingresar';
+  }
+});
+
+// ══ QR TAB AUTO-NAVIGATION ══
+function checkQRParam() {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab');
+  const navBtns = document.querySelectorAll('.nav-tab');
+  if (tab === 'peligrosos') {
+    switchPage('page-peligrosos', navBtns[1], 'amber');
+  } else if (tab === 'reciclaje') {
+    switchPage('page-reciclaje', navBtns[2], '');
+  } else if (tab === 'captacion') {
+    switchPage('page-captacion', navBtns[3], 'blue');
+  }
+}
+
+// ══ INIT ALL ══
+function initAll() {
+  document.getElementById('p_fecha').value = todayISO();
+  document.getElementById('r_fecha').value = todayISO();
+  populateCaptacionSelects();
+  startAuditSync();
+  startPeligrosoSync();
+  startReciclajeSync();
+  startCaptacionSync();
+}
+
+// ══════════════════════════════════════
+// AUDITORÍA MODULE
+// ══════════════════════════════════════
+function makeDocId(week, area) {
+  return week + '__' + area.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'');
+}
+function startAuditSync() {
+  if (fsUnsub) fsUnsub();
+  fsUnsub = db.collection('segregacion').onSnapshot(snap => {
+    auditsCache = snap.docs.map(d => d.data());
+    renderAreaGrid();
+    const active = document.querySelector('.page.active');
+    if (active) {
+      if (active.id === 'page-indicadores') renderIndicadores();
+      if (active.id === 'page-historial')   renderHistorial();
+    }
+  }, err => console.error(err));
+}
+async function saveAuditToFirestore(entry) {
+  await db.collection('segregacion').doc(makeDocId(entry.week, entry.area)).set(entry);
+}
+async function deleteAuditById(auditId) {
+  const audit = auditsCache.find(a => a.id === auditId);
+  if (!audit) return;
+  await db.collection('segregacion').doc(makeDocId(audit.week, audit.area)).delete();
+}
+function getISOWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2,'0')}`;
+}
+function weekLabel(w) {
+  if (!w) return '';
+  const [yr, wk] = w.split('-W');
+  const jan4 = new Date(Date.UTC(+yr, 0, 4));
+  const start = new Date(jan4);
+  start.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay()||7) - 1) + (+wk-1)*7);
+  const end = new Date(start); end.setUTCDate(start.getUTCDate() + 6);
+  const fmt = d => d.toLocaleDateString('es',{day:'numeric',month:'short'});
+  return `${fmt(start)} – ${fmt(end)}`;
+}
+function parseWeekNum(w) { return w ? w.split('-W')[1] : ''; }
+function calcScore(responses) {
+  let ok = 0, total = 0;
+  ITEMS.forEach(item => {
+    const v = responses[item.id];
+    if (!v || v === 'na') return;
+    total++;
+    if (v === 'si') ok++;
+  });
+  if (total === 0) return null;
+  return Math.round((ok / total) * 100);
+}
+function scoreColor(pct) {
+  if (pct === null) return 'var(--muted)';
+  if (pct >= 80) return '#15803D';
+  if (pct >= 60) return '#B45309';
+  return '#B91C1C';
+}
+function scoreBadgeClass(pct) {
+  if (pct >= 80) return 'score-hi';
+  if (pct >= 60) return 'score-md';
+  return 'score-lo';
+}
+function compressImage(file, maxW=900, quality=0.75) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale; canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+async function uploadPhoto(file) {
+  const base64 = await compressImage(file);
+  return { url: base64, path: '' };
+}
+function getPhotoUrl(pd) {
+  if (!pd) return null;
+  if (typeof pd === 'string') return pd;
+  return pd.url || null;
+}
+function getPhotoComentario(pd) {
+  if (!pd || typeof pd === 'string') return '';
+  return pd.comentario || '';
+}
+
+// Week picker
+const weekPicker = document.getElementById('weekPicker');
+let currentWeek = getISOWeek(new Date());
+weekPicker.value = currentWeek;
+updateWeekDisplay(currentWeek);
+weekPicker.addEventListener('change', () => {
+  currentWeek = weekPicker.value;
+  updateWeekDisplay(currentWeek);
+  renderAreaGrid();
+});
+function updateWeekDisplay(w) {
+  document.getElementById('week-badge-label').textContent = 'Sem. ' + parseWeekNum(w);
+  document.getElementById('week-range-label').textContent = weekLabel(w);
+}
+
+let currentLocalidad = Object.keys(LOCALIDADES)[0];
+let caTargetArea = null, caPhotoData = null;
+
+function renderLocTabs() {
+  const container = document.getElementById('locTabs');
+  if (!container) return;
+  container.innerHTML = '';
+  Object.keys(LOCALIDADES).forEach(loc => {
+    const btn = document.createElement('button');
+    btn.className = 'loc-tab' + (loc === currentLocalidad ? ' active' : '');
+    btn.textContent = loc;
+    btn.addEventListener('click', () => { currentLocalidad = loc; renderAreaGrid(); });
+    container.appendChild(btn);
+  });
+}
+
+function renderAreaGrid() {
+  renderLocTabs();
+  const grid = document.getElementById('areaGrid');
+  grid.innerHTML = '';
+  const secs = LOCALIDADES[currentLocalidad] || {};
+  const hasManySections = Object.keys(secs).length > 1;
+  Object.entries(secs).forEach(([secName, areas]) => {
+    if (hasManySections) {
+      const hdr = document.createElement('div');
+      hdr.className = 'subsec-header';
+      hdr.textContent = secName;
+      grid.appendChild(hdr);
+    }
+    const row = document.createElement('div');
+    row.className = 'area-grid';
+    areas.forEach(area => {
+      const audit = auditsCache.find(a => a.area === area && a.week === currentWeek);
+      const pct = audit ? calcScore(audit.responses) : null;
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display:flex;flex-direction:column;gap:4px';
+      const chip = document.createElement('div');
+      chip.className = 'area-chip' + (audit ? ' done' : '');
+      const nameBtn = document.createElement('button');
+      nameBtn.style.cssText = 'flex:1;text-align:left;line-height:1.2;font-size:.74rem;background:none;border:none;color:inherit;cursor:pointer;padding:0;font-weight:600';
+      nameBtn.textContent = area;
+      nameBtn.addEventListener('click', () => openChecklist(area));
+      chip.appendChild(nameBtn);
+      if (pct !== null) {
+        const s = document.createElement('span');
+        s.className = 'score-mini';
+        s.style.color = scoreColor(pct); s.style.fontWeight = '700';
+        s.textContent = pct + '%';
+        chip.appendChild(s);
+      }
+      if (audit) {
+        const del = document.createElement('button');
+        del.className = 'chip-del'; del.title = 'Eliminar'; del.textContent = '✕';
+        del.addEventListener('click', async e => {
+          e.stopPropagation();
+          if (!confirm(`¿Eliminar auditoría de "${area}"?`)) return;
+          try { await deleteAuditById(audit.id); showToast(`Eliminado: ${area}`); }
+          catch(err) { showToast('❌ Error al eliminar'); }
+        });
+        chip.appendChild(del);
+      }
+      wrapper.appendChild(chip);
+      if (audit && pct !== null && pct < 100) {
+        const caBtn = document.createElement('button');
+        caBtn.className = 'ca-strip-btn';
+        caBtn.textContent = `⚠️ ${pct}% · Acción correctiva`;
+        caBtn.addEventListener('click', () => openCAModal(area, audit));
+        wrapper.appendChild(caBtn);
+      }
+      row.appendChild(wrapper);
+    });
+    grid.appendChild(row);
+  });
+  const allDone = auditsCache.filter(a => a.week === currentWeek).length;
+  document.getElementById('done-count').textContent = allDone;
+  document.getElementById('total-count').textContent = ALL_AREAS.length;
+  document.getElementById('progress-fill').style.width = (ALL_AREAS.length ? allDone/ALL_AREAS.length*100 : 0) + '%';
+}
+renderAreaGrid();
+
+function openCAModal(area, audit) {
+  caTargetArea = area;
+  caPhotoData = null;
+  document.getElementById('ca-area-name').textContent = area;
+  document.getElementById('ca-week-label').textContent = 'Sem. ' + parseWeekNum(currentWeek);
+  document.getElementById('ca-desc').value = '';
+  document.getElementById('ca-responsable').value = '';
+  document.getElementById('ca-photo-preview').innerHTML = '';
+  document.getElementById('ca-photo-input').value = '';
+  document.getElementById('ca-msg').textContent = '';
+  document.getElementById('caModal').classList.add('open');
+}
+document.getElementById('caModalClose').addEventListener('click', () => document.getElementById('caModal').classList.remove('open'));
+document.getElementById('caModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('caModal')) document.getElementById('caModal').classList.remove('open');
+});
+document.getElementById('ca-photo-input').addEventListener('change', async e => {
+  const file = e.target.files[0]; if (!file) return;
+  document.getElementById('ca-photo-preview').innerHTML = '<div style="padding:6px 0;font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:6px"><span class="upload-spinner"></span>Procesando...</div>';
+  try {
+    const base64 = await compressImage(file);
+    caPhotoData = base64;
+    document.getElementById('ca-photo-preview').innerHTML = `
+      <div class="photo-preview-wrap" style="margin-top:7px">
+        <img src="${base64}" class="photo-preview" alt="Evidencia">
+        <button class="photo-remove" id="ca-photo-remove">✕</button>
+      </div>`;
+    document.getElementById('ca-photo-remove').addEventListener('click', () => {
+      caPhotoData = null;
+      document.getElementById('ca-photo-preview').innerHTML = '';
+      document.getElementById('ca-photo-input').value = '';
+    });
+  } catch(err) { document.getElementById('ca-photo-preview').innerHTML = ''; showToast('❌ Error al procesar la foto'); }
+  e.target.value = '';
+});
+document.getElementById('ca-save-btn').addEventListener('click', async () => {
+  const desc = document.getElementById('ca-desc').value.trim();
+  if (!desc) { showToast('⚠️ Escribe la descripción'); return; }
+  const btn = document.getElementById('ca-save-btn');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const rec = {
+    id: uid(), area: caTargetArea, week: currentWeek,
+    desc, responsable: document.getElementById('ca-responsable').value.trim(),
+    foto: caPhotoData || null, resuelta: false,
+    fecha_registro: new Date().toISOString()
+  };
+  try {
+    await db.collection('acciones_correctivas').doc(rec.id).set(rec);
+    document.getElementById('ca-msg').textContent = '✓ Acción correctiva guardada';
+    document.getElementById('ca-msg').style.color = 'var(--primary)';
+    setTimeout(() => { document.getElementById('caModal').classList.remove('open'); showToast('✓ Acción correctiva registrada'); }, 1200);
+  } catch(err) {
+    document.getElementById('ca-msg').textContent = '❌ Error al guardar';
+    document.getElementById('ca-msg').style.color = '#B91C1C';
+  } finally { btn.disabled = false; btn.textContent = 'Guardar acción correctiva'; }
+});
+
+let activeArea = null, responses = {}, photos = {};
+function openChecklist(area) {
+  activeArea = area;
+  const existing = auditsCache.find(a => a.area === area && a.week === currentWeek);
+  responses = existing ? { ...existing.responses } : {};
+  photos = {};
+  if (existing && existing.photos) {
+    Object.entries(existing.photos).forEach(([id, pd]) => {
+      if (typeof pd === 'string' && pd) photos[id] = { url: pd, path: '', comentario: '' };
+      else if (pd && pd.url) photos[id] = { url: pd.url, path: pd.path || '', comentario: pd.comentario || '' };
+    });
+  }
+  document.getElementById('cl-area-name').textContent = area;
+  document.getElementById('obs-field').value = existing ? (existing.obs || '') : '';
+  document.getElementById('home-view').style.display = 'none';
+  document.getElementById('checklist-view').style.display = 'block';
+  renderChecklist(); updateMiniScore();
+}
+function renderPhotoPreview(itemId, photoData) {
+  const pv = document.getElementById('pv-' + itemId);
+  if (!pv) return;
+  if (!photoData) { pv.innerHTML = ''; return; }
+  if (photoData.uploading) {
+    pv.innerHTML = `<div style="padding:9px 0;font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:7px"><span class="upload-spinner"></span>Subiendo foto...</div>`;
+    return;
+  }
+  pv.innerHTML = `
+    <div class="photo-preview-wrap">
+      <img src="${photoData.url}" class="photo-preview" alt="Evidencia">
+      <button class="photo-remove" data-item="${itemId}">✕</button>
+    </div>
+    <span class="photo-comment-label">📝 ¿Qué se observó?</span>
+    <textarea class="photo-comment" id="pc-${itemId}" rows="2">${photoData.comentario || ''}</textarea>`;
+  const pcEl = pv.querySelector('#pc-' + itemId);
+  if (pcEl) pcEl.addEventListener('input', e => { if (photos[itemId]) photos[itemId].comentario = e.target.value; });
+}
+function renderChecklist() {
+  const container = document.getElementById('checklist-items');
+  container.innerHTML = '';
+  ITEMS.forEach(item => {
+    const val = responses[item.id] || '';
+    const photoData = photos[item.id] || null;
+    const isNC = val === 'no';
+    const photoUrl = photoData ? photoData.url : null;
+    const photoCmt = photoData ? (photoData.comentario || '') : '';
+    const div = document.createElement('div');
+    div.className = 'checklist-item' + (val ? (isNC ? ' nc-item' : ' answered') : '');
+    div.id = 'ci-' + item.id;
+    div.innerHTML = `
+      <div class="item-header">
+        ${item.color ? `<div class="bin-dot" style="background:${item.color}"></div>` : '<div style="width:13px;height:13px;flex-shrink:0;font-size:11px">🏷️</div>'}
+        <div class="item-label">${item.label}</div>
+      </div>
+      <div class="radio-group">
+        <div class="radio-opt"><input type="radio" name="r_${item.id}" id="r_${item.id}_si" value="si" ${val==='si'?'checked':''}>
+          <label for="r_${item.id}_si" class="conforme">✓ Conforme</label></div>
+        <div class="radio-opt"><input type="radio" name="r_${item.id}" id="r_${item.id}_no" value="no" ${val==='no'?'checked':''}>
+          <label for="r_${item.id}_no" class="nc">✗ No conf.</label></div>
+        <div class="radio-opt"><input type="radio" name="r_${item.id}" id="r_${item.id}_na" value="na" ${val==='na'?'checked':''}>
+          <label for="r_${item.id}_na" class="na">— N/A</label></div>
+      </div>
+      <div class="photo-zone" id="pz-${item.id}" style="${isNC?'':'display:none'}">
+        <span class="photo-zone-label">📎 Evidencia fotográfica</span>
+        <label class="photo-upload-btn">📷 Adjuntar foto<input type="file" accept="image/*" capture="environment" id="file-${item.id}"></label>
+        <div id="pv-${item.id}">${photoUrl ? `
+          <div class="photo-preview-wrap">
+            <img src="${photoUrl}" class="photo-preview" alt="Evidencia">
+            <button class="photo-remove" data-item="${item.id}">✕</button>
+          </div>
+          <span class="photo-comment-label">📝 ¿Qué se observó?</span>
+          <textarea class="photo-comment" id="pc-${item.id}" rows="2">${photoCmt}</textarea>` : ''}</div>
+      </div>`;
+    container.appendChild(div);
+    const pcEl = div.querySelector('#pc-' + item.id);
+    if (pcEl) pcEl.addEventListener('input', e => { if (photos[item.id]) photos[item.id].comentario = e.target.value; });
+    div.querySelectorAll('input[type=radio]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        responses[item.id] = radio.value;
+        const ci = document.getElementById('ci-' + item.id);
+        ci.classList.remove('answered','nc-item');
+        if (radio.value === 'no') ci.classList.add('nc-item');
+        else if (radio.value) ci.classList.add('answered');
+        document.getElementById('pz-' + item.id).style.display = radio.value === 'no' ? 'block' : 'none';
+        if (radio.value !== 'no') { delete photos[item.id]; renderPhotoPreview(item.id, null); }
+        updateMiniScore();
+      });
+    });
+    const fileInput = div.querySelector(`#file-${item.id}`);
+    fileInput.addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      photos[item.id] = { uploading: true }; renderPhotoPreview(item.id, photos[item.id]);
+      try {
+        const { url, path } = await uploadPhoto(file);
+        photos[item.id] = { url, path, comentario: '' };
+        renderPhotoPreview(item.id, photos[item.id]);
+      } catch(err) { delete photos[item.id]; renderPhotoPreview(item.id, null); showToast('❌ Error al subir la foto'); }
+      e.target.value = '';
+    });
+    div.querySelector(`#pv-${item.id}`).addEventListener('click', e => {
+      if (e.target.classList.contains('photo-remove')) {
+        delete photos[e.target.dataset.item];
+        renderPhotoPreview(e.target.dataset.item, null);
+      }
+    });
+  });
+}
+function updateMiniScore() {
+  const pct = calcScore(responses);
+  const circ = 2 * Math.PI * 48;
+  const circle = document.getElementById('mini-circle');
+  const label  = document.getElementById('mini-pct');
+  if (pct === null) { circle.style.strokeDashoffset = circ; label.textContent = '—'; circle.style.stroke = '#9CA3AF'; }
+  else {
+    circle.style.strokeDashoffset = circ - (pct/100)*circ;
+    circle.style.stroke = scoreColor(pct);
+    label.textContent = pct + '%'; label.style.color = scoreColor(pct);
+  }
+}
+document.getElementById('backBtn').addEventListener('click', () => {
+  document.getElementById('home-view').style.display = 'block';
+  document.getElementById('checklist-view').style.display = 'none';
+  renderAreaGrid();
+});
+document.getElementById('saveAuditBtn').addEventListener('click', async () => {
+  const answeredCount = ITEMS.filter(i => responses[i.id]).length;
+  if (answeredCount < ITEMS.length) {
+    if (!confirm(`Hay ${ITEMS.length - answeredCount} ítems sin responder. ¿Guardar de todos modos?`)) return;
+  }
+  if (Object.values(photos).some(p => p && p.uploading)) { showToast('⏳ Espera, hay una foto subiendo...'); return; }
+  const btn = document.getElementById('saveAuditBtn');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const photosData = {};
+  Object.entries(photos).forEach(([id, pd]) => {
+    if (pd && pd.url) photosData[id] = { url: pd.url, path: pd.path || '', comentario: pd.comentario || '' };
+  });
+  const inspector = document.getElementById('inspectorInput').value || 'Sin nombre';
+  localStorage.setItem('pb_inspector', inspector);
+  const existing = auditsCache.find(a => a.area === activeArea && a.week === currentWeek);
+  const entry = {
+    id: existing ? existing.id : Date.now(),
+    week: currentWeek, area: activeArea, inspector,
+    date: new Date().toISOString(), responses: { ...responses },
+    photos: photosData, obs: document.getElementById('obs-field').value,
+    score: calcScore(responses),
+  };
+  try {
+    await saveAuditToFirestore(entry);
+    showToast('✓ Auditoría guardada');
+    document.getElementById('home-view').style.display = 'block';
+    document.getElementById('checklist-view').style.display = 'none';
+    renderAreaGrid();
+  } catch(err) { showToast('❌ Error al guardar'); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar auditoría'; }
+});
+
+// Indicadores
+function getWeeks(audits) { return [...new Set(audits.map(a => a.week))].sort().reverse(); }
+function populateFilters(audits) {
+  const weeks = getWeeks(audits);
+  ['ind-week-filter','hist-week-filter'].forEach(id => {
+    const sel = document.getElementById(id), cur = sel.value;
+    sel.innerHTML = '<option value="">Todas las semanas</option>';
+    weeks.forEach(w => {
+      const o = document.createElement('option');
+      o.value = w; o.textContent = `Sem. ${parseWeekNum(w)} — ${weekLabel(w)}`;
+      if (w === cur) o.selected = true;
+      sel.appendChild(o);
+    });
+  });
+  ['ind-area-filter','hist-area-filter'].forEach(id => {
+    const sel = document.getElementById(id), cur = sel.value;
+    sel.innerHTML = '<option value="">Todas las áreas</option>';
+    ALL_AREAS.forEach(a => {
+      const o = document.createElement('option');
+      o.value = a; o.textContent = a;
+      if (a === cur) o.selected = true;
+      sel.appendChild(o);
+    });
+  });
+}
+function renderIndicadores() {
+  const all = auditsCache;
+  populateFilters(all);
+  const weekF = document.getElementById('ind-week-filter').value;
+  const areaF = document.getElementById('ind-area-filter').value;
+  let audits = all;
+  if (weekF) audits = audits.filter(a => a.week === weekF);
+  if (areaF) audits = audits.filter(a => a.area === areaF);
+  const scores = audits.map(a => a.score).filter(s => s !== null);
+  const general = scores.length ? Math.round(scores.reduce((s,v)=>s+v,0)/scores.length) : null;
+  const stG = document.getElementById('st-general');
+  stG.textContent = general !== null ? general + '%' : '—';
+  stG.style.color = general !== null ? scoreColor(general) : 'var(--muted)';
+  document.getElementById('st-areas').textContent = [...new Set(audits.map(a=>a.area))].length || '—';
+  document.getElementById('st-audits').textContent = audits.length || '—';
+  const areaChart = document.getElementById('bar-chart-areas');
+  areaChart.innerHTML = '';
+  const areaScores = {};
+  ALL_AREAS.forEach(a => {
+    const rel = audits.filter(x => x.area === a);
+    if (!rel.length) return;
+    const sc = rel.map(x => x.score).filter(s => s !== null);
+    if (sc.length) areaScores[a] = Math.round(sc.reduce((s,v)=>s+v,0)/sc.length);
+  });
+  const sorted = Object.entries(areaScores).sort((a,b) => b[1]-a[1]);
+  document.getElementById('no-data-msg').style.display = !sorted.length ? 'block' : 'none';
+  sorted.forEach(([name, pct]) => {
+    const color = scoreColor(pct);
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `<div class="bar-name">${name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}">${pct>=20?pct+'%':''}</div></div>
+      <div class="bar-pct" style="color:${color}">${pct}%</div>`;
+    areaChart.appendChild(row);
+  });
+  const itemChart = document.getElementById('bar-chart-items');
+  itemChart.innerHTML = '';
+  document.getElementById('no-data-items').style.display = !audits.length ? 'block' : 'none';
+  ITEMS.forEach(item => {
+    let ok=0, total=0;
+    audits.forEach(a => {
+      const v = a.responses[item.id];
+      if (!v||v==='na') return; total++; if(v==='si') ok++;
+    });
+    if (!total) return;
+    const pct = Math.round((ok/total)*100);
+    const color = item.color || 'var(--primary)';
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `<div class="bar-name">${ITEM_LABELS_SHORT[item.id]}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}">${pct>=20?pct+'%':''}</div></div>
+      <div class="bar-pct" style="color:${scoreColor(pct)}">${pct}%</div>`;
+    itemChart.appendChild(row);
+  });
+}
+document.getElementById('ind-week-filter').addEventListener('change', renderIndicadores);
+document.getElementById('ind-area-filter').addEventListener('change', renderIndicadores);
+
+// Historial
+function renderHistorial() {
+  const all = auditsCache;
+  populateFilters(all);
+  const weekF = document.getElementById('hist-week-filter').value;
+  const areaF = document.getElementById('hist-area-filter').value;
+  let audits = all.slice().sort((a,b) => b.id - a.id);
+  if (weekF) audits = audits.filter(a => a.week === weekF);
+  if (areaF) audits = audits.filter(a => a.area === areaF);
+  const list = document.getElementById('historial-list');
+  list.innerHTML = '';
+  if (!audits.length) {
+    list.innerHTML = `<div class="empty-state"><p>🗂 No hay auditorías registradas.</p></div>`;
+    return;
+  }
+  audits.forEach(audit => {
+    const pct = audit.score;
+    const d = new Date(audit.date);
+    const dateStr = d.toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
+    const hasPhotos = audit.photos && Object.values(audit.photos).some(p => getPhotoUrl(p));
+    const row = document.createElement('div');
+    row.className = 'audit-row';
+    row.innerHTML = `
+      <div style="flex:1">
+        <div class="area-name">${audit.area}</div>
+        <div class="meta">Sem. ${parseWeekNum(audit.week)} · ${dateStr} · ${audit.inspector}${hasPhotos?' · 📷':''}</div>
+        ${audit.obs ? `<div class="meta" style="margin-top:2px;color:var(--text-mid);font-style:italic">"${audit.obs.slice(0,60)}${audit.obs.length>60?'…':''}"</div>` : ''}
+      </div>
+      <div class="audit-row-actions">
+        <div class="score-badge ${pct!==null?scoreBadgeClass(pct):''}">${pct!==null?pct+'%':'—'}</div>
+        <button class="btn btn-outline btn-sm rpt-btn" data-id="${audit.id}" title="Ver informe">📄</button>
+        <button class="del-btn-a" data-id="${audit.id}" aria-label="Eliminar">✕</button>
+      </div>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.rpt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const audit = auditsCache.find(a => a.id === +btn.dataset.id);
+      if (audit) openReport(audit);
+    });
+  });
+  list.querySelectorAll('.del-btn-a').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Eliminar esta auditoría?')) return;
+      try { await deleteAuditById(+btn.dataset.id); showToast('Auditoría eliminada'); renderHistorial(); }
+      catch(err) { showToast('❌ Error al eliminar'); }
+    });
+  });
+}
+document.getElementById('hist-week-filter').addEventListener('change', renderHistorial);
+document.getElementById('hist-area-filter').addEventListener('change', renderHistorial);
+
+// Informe
+function openReport(audit) {
+  const pct = audit.score;
+  const d = new Date(audit.date);
+  const dateStr = d.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const timeStr = d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  const totalItems = ITEMS.filter(i => audit.responses[i.id] && audit.responses[i.id] !== 'na').length;
+  const okItems = ITEMS.filter(i => audit.responses[i.id] === 'si').length;
+  const sc2 = pct >= 80 ? '#15803D' : pct >= 60 ? '#B45309' : '#B91C1C';
+  const valLabel = v => ({si:'Conforme',no:'No Conforme',na:'No Aplica','':'Sin respuesta'}[v||'']);
+  const badgeClass = v => ({si:'rpt-conforme',no:'rpt-nc',na:'rpt-na','':'rpt-na'}[v||'']);
+  const photoEntries = ITEMS.filter(i => getPhotoUrl(audit.photos && audit.photos[i.id]))
+    .map((i,idx) => ({ item:i, src:getPhotoUrl(audit.photos[i.id]), comentario:getPhotoComentario(audit.photos[i.id]), num:idx+1 }));
+  const itemsHTML = ITEMS.map(item => {
+    const val = audit.responses[item.id] || '';
+    const pd = audit.photos && audit.photos[item.id];
+    const pUrl = getPhotoUrl(pd); const pCmt = getPhotoComentario(pd);
+    const pIdx = photoEntries.findIndex(e => e.item.id === item.id);
+    return `<div class="rpt-item">
+      <div style="display:flex;align-items:flex-start;gap:7px;flex:1">
+        ${item.color ? `<div style="width:11px;height:11px;border-radius:50%;background:${item.color};margin-top:3px;flex-shrink:0"></div>` : '<div style="width:11px;flex-shrink:0;font-size:10px">🏷️</div>'}
+        <div style="flex:1">
+          <div class="rpt-item-label">${item.label}</div>
+          ${pUrl ? `<div style="margin-top:7px"><img src="${pUrl}" style="width:90px;height:90px;object-fit:cover;border-radius:7px;border:1.5px solid #C8E0D0">
+            ${pCmt ? `<div style="font-size:.68rem;color:#3D5446;margin-top:4px;font-style:italic">"${pCmt}"</div>` : ''}
+            <div style="font-size:.6rem;color:#6D8576;margin-top:2px">Foto ${pIdx+1}</div></div>` : ''}
+        </div>
+      </div>
+      <span class="rpt-item-badge ${badgeClass(val)}">${valLabel(val)}</span>
+    </div>`;
+  }).join('');
+  const mediaSummaryHTML = photoEntries.length ? `
+    <div class="rpt-media-section"><div class="rpt-section-title">Evidencias fotográficas</div>
+    <div class="rpt-media-all">${photoEntries.map(e => `
+      <div class="rpt-photo-wrap"><img src="${e.src}" class="rpt-photo" alt="Foto ${e.num}">
+        <div class="rpt-photo-caption">Foto ${e.num} — ${ITEM_LABELS_SHORT[e.item.id]}</div>
+        ${e.comentario ? `<div class="rpt-photo-cmt">"${e.comentario}"</div>` : ''}
+      </div>`).join('')}</div></div>` : '';
+  document.getElementById('report-body').innerHTML = `
+    <div class="rpt-header">
+      <div class="rpt-logo"><div class="rpt-logo-mark">♻️</div><div class="rpt-brand">Core Materials · Plantabal</div></div>
+      <div class="rpt-title">Auditoría de Segregación de Residuos</div>
+      <div class="rpt-meta-grid">
+        <div class="rpt-meta-cell"><div class="rpt-meta-key">Área</div><div class="rpt-meta-val">${audit.area}</div></div>
+        <div class="rpt-meta-cell"><div class="rpt-meta-key">Estado</div><div class="rpt-meta-val" style="color:${pct>=80?'#15803D':'#B91C1C'}">${pct>=80?'✓ Conforme':'⚠ Requiere acción'}</div></div>
+        <div class="rpt-meta-cell"><div class="rpt-meta-key">Fecha</div><div class="rpt-meta-val">${dateStr}</div></div>
+        <div class="rpt-meta-cell"><div class="rpt-meta-key">Hora</div><div class="rpt-meta-val">${timeStr}</div></div>
+        <div class="rpt-meta-cell"><div class="rpt-meta-key">Inspector</div><div class="rpt-meta-val">${audit.inspector}</div></div>
+        <div class="rpt-meta-cell"><div class="rpt-meta-key">Semana</div><div class="rpt-meta-val">Sem. ${parseWeekNum(audit.week)} · ${weekLabel(audit.week)}</div></div>
+      </div>
+    </div>
+    <div class="rpt-score-bar">
+      <div><div class="rpt-score-num" style="color:${sc2}">${pct!==null?pct+'%':'—'}</div><div class="rpt-score-label">Puntaje general</div></div>
+      <div style="flex:1;height:11px;background:#EAF3ED;border-radius:99px;overflow:hidden;margin-left:11px">
+        <div style="height:100%;width:${pct||0}%;background:${sc2};border-radius:99px"></div>
+      </div>
+      <div style="text-align:right"><div style="font-size:.85rem;font-weight:700;font-variant-numeric:tabular-nums">${okItems}/${totalItems}</div><div style="font-size:.6rem;color:#6D8576">conformes</div></div>
+    </div>
+    <div class="rpt-section-title">Auditoría por criterio</div>
+    <div>${itemsHTML}</div>
+    ${audit.obs ? `<div class="rpt-obs"><span class="rpt-obs-label">Observaciones generales</span>${audit.obs}</div>` : ''}
+    ${mediaSummaryHTML}
+    <div class="rpt-footer">Auditoría generada · ${new Date().toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'})} · Plantabal</div>`;
+  document.getElementById('reportModal').classList.add('open');
+  document.getElementById('reportModal').scrollTop = 0;
+}
+document.getElementById('closeReport').addEventListener('click', () => document.getElementById('reportModal').classList.remove('open'));
+document.getElementById('reportModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('reportModal')) document.getElementById('reportModal').classList.remove('open');
+});
+
+// Backup/Restore
+document.getElementById('backupBtn').addEventListener('click', () => {
+  if (!auditsCache.length) { showToast('No hay datos para exportar'); return; }
+  const payload = { version: 2, exportedAt: new Date().toISOString(), audits: auditsCache };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  const now = new Date();
+  a.download = `Segregacion_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast(`✓ ${auditsCache.length} auditorías exportadas`);
+});
+document.getElementById('restoreInput').addEventListener('change', async e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.audits || !Array.isArray(data.audits)) throw new Error('Formato inválido');
+      const existingIds = new Set(auditsCache.map(a => a.id));
+      const incoming = data.audits.filter(a => !existingIds.has(a.id));
+      if (incoming.length > 0) {
+        const chunks = [];
+        for (let i = 0; i < incoming.length; i += 400) chunks.push(incoming.slice(i, i+400));
+        for (const chunk of chunks) {
+          const batch = db.batch();
+          chunk.forEach(audit => { batch.set(db.collection('segregacion').doc(makeDocId(audit.week, audit.area)), audit); });
+          await batch.commit();
+        }
+      }
+      const status = document.getElementById('restore-status');
+      status.style.display = 'block';
+      status.textContent = incoming.length === 0 ? '✓ Datos al día, nada nuevo.' : `✓ ${incoming.length} auditorías importadas.`;
+      setTimeout(() => { status.style.display = 'none'; }, 5000);
+      showToast('✓ Importación completada');
+    } catch(err) { showToast('❌ Archivo inválido'); }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+// Export Excel (auditorías)
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const audits = auditsCache;
+  if (!audits.length) { showToast('No hay datos'); return; }
+  function xmlEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function cell(val,sid,type='String'){return `<Cell ss:StyleID="${sid}"><Data ss:Type="${type}">${xmlEsc(val)}</Data></Cell>`;}
+  function numCell(val,sid){return `<Cell ss:StyleID="${sid}"><Data ss:Type="Number">${val}</Data></Cell>`;}
+  const allWeeks=[...new Set(audits.map(a=>a.week))].sort();
+  const latestWeek=allWeeks[allWeeks.length-1]||'';
+  const latestAudits=latestWeek?audits.filter(a=>a.week===latestWeek):[];
+  const latestScores=latestAudits.map(a=>a.score).filter(s=>s!==null);
+  const generalPct=latestScores.length?Math.round(latestScores.reduce((s,v)=>s+v,0)/latestScores.length):0;
+  const scoreStyle=pct=>{if(pct===null)return 's_def';if(pct>=80)return 's_green';if(pct>=60)return 's_yellow';return 's_red';};
+  const pctBar=pct=>pct!==null?pct+'%':'—';
+  const valLabel=v=>({si:'Conforme',no:'No Conforme',na:'No Aplica','':'—'}[v||'']);
+  const rows=[];
+  rows.push(`<Row ss:Height="28"><Cell ss:MergeAcross="5" ss:StyleID="s_title"><Data ss:Type="String">AUDITORÍA DE SEGREGACIÓN — PLANTABAL</Data></Cell></Row>`);
+  rows.push(`<Row ss:Height="20"><Cell ss:MergeAcross="5" ss:StyleID="s_subtitle"><Data ss:Type="String">Generado: ${new Date().toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'})}</Data></Cell></Row>`);
+  rows.push(`<Row ss:Height="8"/>`);
+  rows.push(`<Row ss:Height="20">${cell('Semana','s_hdr')}${cell('Área','s_hdr')}${cell('Inspector','s_hdr')}${cell('Fecha','s_hdr')}${cell('Puntaje','s_hdr')}${cell('Observaciones','s_hdr')}</Row>`);
+  audits.slice().sort((a,b)=>a.week.localeCompare(b.week)||a.area.localeCompare(b.area)).forEach(a=>{
+    const d=new Date(a.date);
+    rows.push(`<Row ss:Height="16">${cell('Sem.'+parseWeekNum(a.week),'s_def')}${cell(a.area,'s_def')}${cell(a.inspector,'s_def')}${cell(d.toLocaleDateString('es'),'s_def')}${cell(a.score!==null?a.score+'%':'—',scoreStyle(a.score))}${cell(a.obs||'','s_def')}</Row>`);
+  });
+  const styles=`<Styles>
+    <Style ss:ID="s_def"><Font ss:FontName="Calibri" ss:Size="10"/></Style>
+    <Style ss:ID="s_title"><Font ss:FontName="Calibri" ss:Size="13" ss:Bold="1" ss:Color="#1A5C38"/><Interior ss:Color="#EAF3ED" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="s_subtitle"><Font ss:FontName="Calibri" ss:Size="10" ss:Color="#6D8576"/></Style>
+    <Style ss:ID="s_hdr"><Alignment ss:Horizontal="Center"/><Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/><Interior ss:Color="#C8E0D0" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="s_green"><Alignment ss:Horizontal="Center"/><Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1" ss:Color="#14532D"/><Interior ss:Color="#DCFCE7" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="s_yellow"><Alignment ss:Horizontal="Center"/><Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1" ss:Color="#713F12"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="s_red"><Alignment ss:Horizontal="Center"/><Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1" ss:Color="#7F1D1D"/><Interior ss:Color="#FEE2E2" ss:Pattern="Solid"/></Style>
+  </Styles>`;
+  const xml=`<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${styles}<Worksheet ss:Name="Auditorías"><Table><Column ss:Width="70"/><Column ss:Width="160"/><Column ss:Width="120"/><Column ss:Width="90"/><Column ss:Width="70"/><Column ss:Width="180"/>${rows.join('')}</Table></Worksheet></Workbook>`;
+  const blob=new Blob([xml],{type:'application/vnd.ms-excel;charset=UTF-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  a.download=`Auditoria_${new Date().toISOString().slice(0,10)}.xls`;
+  a.click(); URL.revokeObjectURL(url); showToast('✓ Excel generado');
+});
+
+// ══════════════════════════════════════
+// PELIGROSOS MODULE
+// ══════════════════════════════════════
+function startPeligrosoSync() {
+  if (pUnsub) pUnsub();
+  pUnsub = db.collection('residuos_peligrosos').orderBy('fecha_registro','desc').onSnapshot(snap => {
+    peligrosoCache = snap.docs.map(d => d.data());
+    if (document.getElementById('page-peligrosos').classList.contains('active')) renderPeligrosos();
+  }, err => console.error(err));
+}
+
+document.getElementById('p_submit').addEventListener('click', async () => {
+  const fecha    = document.getElementById('p_fecha').value || todayISO();
+  const localidad= document.getElementById('p_localidad').value;
+  const area     = document.getElementById('p_area').value.trim();
+  const tipo     = document.getElementById('p_tipo').value;
+  const pesoRaw  = document.getElementById('p_peso').value;
+  const tecnico  = document.getElementById('p_tecnico').value.trim();
+  if (!pesoRaw || isNaN(parseFloat(pesoRaw))) { showToast('⚠️ Ingresa un peso válido'); return; }
+  const rec = {
+    id: uid(), origen:'panel',
+    fecha, mes: mesFromISO(fecha), localidad, area,
+    tipo, desc: CODIGOS_P[tipo] || tipo,
+    peso: parseFloat(pesoRaw), tecnico,
+    fecha_registro: new Date().toISOString()
+  };
+  const btn = document.getElementById('p_submit');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    await db.collection('residuos_peligrosos').doc(rec.id).set(rec);
+    document.getElementById('p_peso').value = '';
+    document.getElementById('p_area').value = '';
+    document.getElementById('p_tecnico').value = '';
+    document.getElementById('p_fecha').value = todayISO();
+    const msg = document.getElementById('p_msg');
+    msg.textContent = '✓ Registro guardado';
+    setTimeout(() => msg.textContent = '', 2200);
+  } catch(err) { showToast('❌ Error al guardar'); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar registro'; }
+});
+
+function renderPeligrosos() {
+  const locF = document.getElementById('p_fLoc').value;
+  const mesF = document.getElementById('p_fMes').value;
+  // Update mes filter options
+  const mesEl = document.getElementById('p_fMes');
+  const curMes = mesEl.value;
+  const mesesPresentes = [...new Set(peligrosoCache.map(r => r.mes))].filter(Boolean);
+  mesesPresentes.sort((a,b) => MESES.indexOf(a)-MESES.indexOf(b));
+  mesEl.innerHTML = '<option value="">Todos los meses</option>' +
+    mesesPresentes.map(m => `<option ${m===curMes?'selected':''}>${m}</option>`).join('');
+
+  const rows = peligrosoCache.filter(r =>
+    (!locF || r.localidad === locF) && (!mesF || r.mes === mesF)
+  );
+  const tbody = document.getElementById('p_tbody');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${fmtDate(r.fecha)}</td>
+      <td>${r.mes||'—'}</td>
+      <td>${r.localidad}</td>
+      <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.area||'—'}</td>
+      <td><span class="chip chip-amber" style="white-space:nowrap">${r.tipo}</span></td>
+      <td>${(r.peso||0).toFixed(1)}</td>
+      <td>${r.tecnico||'—'}</td>
+      <td><button class="del-btn" onclick="delPeligroso('${r.id}')">✕</button></td>
+    </tr>
+  `).join('');
+  document.getElementById('p_empty').style.display = rows.length ? 'none' : 'block';
+  const totKg = rows.reduce((s,r) => s+(r.peso||0), 0);
+  document.getElementById('p_totals').innerHTML = `
+    <div class="tstat amber"><div class="v">${rows.length}</div><div class="k">Registros</div></div>
+    <div class="tstat amber"><div class="v">${totKg.toFixed(1)} kg</div><div class="k">Total filtrado</div></div>
+    <div class="tstat amber"><div class="v">${peligrosoCache.reduce((s,r)=>s+(r.peso||0),0).toFixed(1)} kg</div><div class="k">Total global</div></div>
+  `;
+}
+
+async function delPeligroso(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  try { await db.collection('residuos_peligrosos').doc(id).delete(); showToast('Eliminado'); }
+  catch(err) { showToast('❌ Error al eliminar'); }
+}
+
+// ══════════════════════════════════════
+// RECICLAJE MODULE
+// ══════════════════════════════════════
+function startReciclajeSync() {
+  if (rUnsub) rUnsub();
+  rUnsub = db.collection('residuos_comunes').orderBy('fecha_registro','desc').onSnapshot(snap => {
+    reciclajeCache = snap.docs.map(d => d.data());
+    if (document.getElementById('page-reciclaje').classList.contains('active')) renderReciclaje();
+  }, err => console.error(err));
+}
+
+document.getElementById('r_submit').addEventListener('click', async () => {
+  const localidad= document.getElementById('r_localidad').value;
+  const fecha    = document.getElementById('r_fecha').value || todayISO();
+  const tipo     = document.getElementById('r_tipo').value;
+  const pesoRaw  = document.getElementById('r_peso').value;
+  const destino  = document.getElementById('r_destino').value;
+  const tecnico  = document.getElementById('r_tecnico').value.trim();
+  const obs      = document.getElementById('r_obs').value.trim();
+  if (!pesoRaw || isNaN(parseFloat(pesoRaw))) { showToast('⚠️ Ingresa un peso válido'); return; }
+  const rec = {
+    id: uid(), origen:'panel',
+    fecha, localidad, tipo, peso: parseFloat(pesoRaw), destino, tecnico, obs,
+    fecha_registro: new Date().toISOString()
+  };
+  const btn = document.getElementById('r_submit');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    await db.collection('residuos_comunes').doc(rec.id).set(rec);
+    document.getElementById('r_peso').value = '';
+    document.getElementById('r_obs').value = '';
+    document.getElementById('r_tecnico').value = '';
+    document.getElementById('r_fecha').value = todayISO();
+    const msg = document.getElementById('r_msg');
+    msg.textContent = '✓ Registro guardado';
+    setTimeout(() => msg.textContent = '', 2200);
+  } catch(err) { showToast('❌ Error al guardar'); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar registro'; }
+});
+
+function renderReciclaje() {
+  const locF  = document.getElementById('r_fLoc').value;
+  const tipoF = document.getElementById('r_fTipo').value;
+  const rows = reciclajeCache.filter(r =>
+    (!locF || r.localidad === locF) && (!tipoF || r.tipo === tipoF)
+  );
+  const tbody = document.getElementById('r_tbody');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${fmtDate(r.fecha)}</td>
+      <td>${r.localidad}</td>
+      <td><span class="chip">${r.tipo}</span></td>
+      <td>${(r.peso||0).toFixed(1)}</td>
+      <td>${r.destino||'—'}</td>
+      <td>${r.tecnico||'—'}</td>
+      <td><button class="del-btn" onclick="delReciclaje('${r.id}')">✕</button></td>
+    </tr>
+  `).join('');
+  document.getElementById('r_empty').style.display = rows.length ? 'none' : 'block';
+  const totKg = rows.reduce((s,r) => s+(r.peso||0), 0);
+  const byTipo = {};
+  rows.forEach(r => { byTipo[r.tipo] = (byTipo[r.tipo]||0) + (r.peso||0); });
+  document.getElementById('r_totals').innerHTML = `
+    <div class="tstat"><div class="v">${rows.length}</div><div class="k">Registros</div></div>
+    <div class="tstat"><div class="v">${totKg.toFixed(1)} kg</div><div class="k">Total filtrado</div></div>
+  ` + Object.entries(byTipo).map(([t,k]) => `
+    <div class="tstat"><div class="v">${k.toFixed(1)} kg</div><div class="k">${t}</div></div>
+  `).join('');
+}
+
+async function delReciclaje(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  try { await db.collection('residuos_comunes').doc(id).delete(); showToast('Eliminado'); }
+  catch(err) { showToast('❌ Error al eliminar'); }
+}
+
+// ══════════════════════════════════════
+// CAPTACIÓN MODULE
+// ══════════════════════════════════════
+function populateCaptacionSelects() {
+  const nowYear = new Date().getFullYear();
+  document.getElementById('a_anio').innerHTML = ANIOS_AGUA.map(y => `<option ${y===nowYear?'selected':''}>${y}</option>`).join('');
+  const nowMes = MESES[new Date().getMonth()];
+  document.getElementById('a_mes').innerHTML = MESES.map(m => `<option ${m===nowMes?'selected':''}>${m}</option>`).join('');
+  document.getElementById('a_fAnio').innerHTML = '<option value="">Todos los años</option>' + ANIOS_AGUA.map(y => `<option>${y}</option>`).join('');
+  document.getElementById('a_fMes').innerHTML = '<option value="">Todos los meses</option>' + MESES.map(m => `<option>${m}</option>`).join('');
+  document.getElementById('a_dashAnio').innerHTML = ANIOS_AGUA.map(y => `<option ${y===nowYear?'selected':''}>${y}</option>`).join('');
+}
+
+function startCaptacionSync() {
+  if (aUnsub) aUnsub();
+  aUnsub = db.collection('captacion_agua').onSnapshot(snap => {
+    captacionCache = snap.docs.map(d => d.data());
+    if (document.getElementById('page-captacion').classList.contains('active')) {
+      renderCaptacion(); renderDashboard();
+    }
+  }, err => console.error(err));
+}
+
+document.getElementById('a_submit').addEventListener('click', async () => {
+  const punto   = document.getElementById('a_punto').value;
+  const anio    = parseInt(document.getElementById('a_anio').value, 10);
+  const mes     = document.getElementById('a_mes').value;
+  const lectura = parseFloat(document.getElementById('a_lectura').value);
+  const tecnico = document.getElementById('a_tecnico').value.trim();
+  const obs     = document.getElementById('a_obs').value.trim();
+  const msg     = document.getElementById('a_msg');
+  if (isNaN(lectura)) {
+    msg.style.color = '#B91C1C'; msg.textContent = 'Ingresa una lectura válida';
+    setTimeout(() => { msg.textContent = ''; msg.style.color = 'var(--blue-deep)'; }, 2600);
+    return;
+  }
+  const existente = captacionCache.find(r => r.punto===punto && r.anio===anio && r.mes===mes);
+  const btn = document.getElementById('a_submit');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    let rec;
+    if (existente) {
+      rec = { ...existente, lectura, tecnico, obs, fecha_registro: new Date().toISOString() };
+    } else {
+      rec = { id: uid(), punto, anio, mes, lectura, tecnico, obs, fecha_registro: new Date().toISOString() };
+    }
+    await db.collection('captacion_agua').doc(rec.id).set(rec);
+    document.getElementById('a_lectura').value = '';
+    document.getElementById('a_obs').value = '';
+    document.getElementById('a_tecnico').value = '';
+    msg.textContent = existente ? '✓ Lectura actualizada' : '✓ Lectura guardada';
+    setTimeout(() => msg.textContent = '', 2200);
+  } catch(err) { showToast('❌ Error al guardar'); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar lectura'; }
+});
+
+function getConsumoLookup() {
+  const lookup = {};
+  const porPunto = {};
+  captacionCache.forEach(r => { (porPunto[r.punto] = porPunto[r.punto]||[]).push(r); });
+  Object.keys(porPunto).forEach(p => {
+    const arr = porPunto[p].slice().sort((a,b) => (a.anio-b.anio)||(MESES.indexOf(a.mes)-MESES.indexOf(b.mes)));
+    let prev = null;
+    arr.forEach(r => {
+      const key = `${r.punto}|${r.anio}|${r.mes}`;
+      lookup[key] = prev === null ? null : +(r.lectura - prev).toFixed(2);
+      prev = r.lectura;
+    });
+  });
+  return lookup;
+}
+
+function renderCaptacion() {
+  const puntoF = document.getElementById('a_fPunto').value;
+  const anioF  = document.getElementById('a_fAnio').value;
+  const mesF   = document.getElementById('a_fMes').value;
+  const lookup = getConsumoLookup();
+  let rows = captacionCache.filter(r =>
+    (!puntoF || r.punto===puntoF) &&
+    (!anioF || String(r.anio)===anioF) &&
+    (!mesF || r.mes===mesF)
+  );
+  rows = rows.slice().sort((a,b) => (b.anio-a.anio)||(MESES.indexOf(b.mes)-MESES.indexOf(a.mes)));
+  const tbody = document.getElementById('a_tbody');
+  tbody.innerHTML = rows.map(r => {
+    const key = `${r.punto}|${r.anio}|${r.mes}`;
+    const consumo = lookup[key];
+    const cTxt = (consumo===null||consumo===undefined) ? 'N/D (primer registro)' : consumo.toFixed(2);
+    return `<tr>
+      <td>${r.anio}</td>
+      <td>${r.mes}</td>
+      <td><span class="chip chip-blue">${r.punto}</span></td>
+      <td>${r.lectura.toFixed(2)}</td>
+      <td>${cTxt}</td>
+      <td>${r.tecnico||'—'}</td>
+      <td><button class="del-btn" onclick="delCaptacion('${r.id}')">✕</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('a_empty').style.display = rows.length ? 'none' : 'block';
+  const consumoVals = rows.map(r => { const k=`${r.punto}|${r.anio}|${r.mes}`; return lookup[k]; }).filter(v=>v!==null&&v!==undefined);
+  const totConsumo = consumoVals.reduce((s,v)=>s+v,0);
+  document.getElementById('a_totals').innerHTML = `
+    <div class="tstat blue"><div class="v">${rows.length}</div><div class="k">Lecturas</div></div>
+    <div class="tstat blue"><div class="v">${totConsumo.toFixed(2)} m³</div><div class="k">Consumo filtrado</div></div>
+  `;
+}
+
+function renderDashboard() {
+  const anio   = parseInt(document.getElementById('a_dashAnio').value, 10);
+  const puntoF = document.getElementById('a_dashPunto').value;
+  const lookup = getConsumoLookup();
+  const totales = MESES.map(mes => {
+    if (puntoF) {
+      const v = lookup[`${puntoF}|${anio}|${mes}`];
+      return (v && v > 0) ? v : 0;
+    }
+    return PUNTOS_AGUA.reduce((s,p) => {
+      const v = lookup[`${p}|${anio}|${mes}`];
+      return s + ((v && v > 0) ? v : 0);
+    }, 0);
+  });
+  const max = Math.max(...totales, 1);
+  document.getElementById('a_chart').innerHTML = totales.map(v => `
+    <div class="bar-col">
+      <div class="bar-val">${v > 0 ? v.toFixed(1) : ''}</div>
+      <div class="bar" style="height:${v>0?Math.max((v/max*150),4):0}px"></div>
+    </div>
+  `).join('');
+  document.getElementById('a_chartLabels').innerHTML = MESES.map(m => `<div class="bar-label-col">${m.slice(0,3)}</div>`).join('');
+  const totalAnio = totales.reduce((s,v)=>s+v,0);
+  document.getElementById('a_dashTotal').textContent = totalAnio.toFixed(1) + ' m³';
+}
+
+async function delCaptacion(id) {
+  if (!confirm('¿Eliminar esta lectura?')) return;
+  try { await db.collection('captacion_agua').doc(id).delete(); showToast('Eliminado'); }
+  catch(err) { showToast('❌ Error al eliminar'); }
+}
+
+// ══════════════════════════════════════
+// CSV EXPORT
+// ══════════════════════════════════════
+function csvEscape(v) {
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+}
+function exportCSV(kind) {
+  let headers, rows, filename;
+  if (kind === 'peligrosos') {
+    headers = ['Fecha','Mes','Localidad','Área','Código','Tipo de Desecho','Peso (kg)','Técnico'];
+    rows = peligrosoCache.map(r => [fmtDate(r.fecha), r.mes, r.localidad, r.area, r.tipo, r.desc||CODIGOS_P[r.tipo]||'', (r.peso||0).toFixed(1), r.tecnico]);
+    filename = 'GE-GA-R5_desechos_peligrosos.csv';
+  } else if (kind === 'reciclaje') {
+    headers = ['Fecha','Localidad','Tipo','Peso (kg)','Destino','Técnico','Observaciones'];
+    rows = reciclajeCache.map(r => [fmtDate(r.fecha), r.localidad, r.tipo, (r.peso||0).toFixed(1), r.destino, r.tecnico, r.obs]);
+    filename = 'GE-GA-R9_residuos_comunes_reciclables.csv';
+  } else {
+    const lookup = getConsumoLookup();
+    headers = ['Año','Mes','Punto de Captación','Lectura (m³)','Consumo del Mes (m³)','Técnico','Observaciones'];
+    rows = captacionCache.slice().sort((a,b)=>(a.anio-b.anio)||(MESES.indexOf(a.mes)-MESES.indexOf(b.mes)))
+      .map(r => {
+        const k = `${r.punto}|${r.anio}|${r.mes}`;
+        const c = lookup[k];
+        return [r.anio, r.mes, r.punto, r.lectura.toFixed(2), (c===null||c===undefined)?'N/D':c.toFixed(2), r.tecnico, r.obs];
+      });
+    filename = 'captacion_agua.csv';
+  }
+  const csv = [headers, ...rows].map(row => row.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
