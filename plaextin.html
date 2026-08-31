@@ -1206,80 +1206,7 @@ function printCedula(){
   </div><script>window.onload=()=>window.print();<\/script>
 </div>
 
-
-<!-- GABINETE FORM MODAL -->
-<div class="mbg" id="m-gab-form">
-<div class="fmodal" style="max-width:520px">
-  <div class="fmod-hd">
-    <span style="font-size:20px">🚰</span>
-    <h2 id="mg-title">Registrar Gabinete</h2>
-    <button class="mclose" onclick="close_('m-gab-form')">×</button>
-  </div>
-  <div class="fmod-body">
-    <div class="fg">
-      <div class="fg-g"><label>N° Gabinete *</label><input id="mg-num" placeholder="Ej: 1, S/N-01"></div>
-      <div class="fg-g"><label>Centro de Costo</label><input id="mg-cc" placeholder="Ej: 3010"></div>
-      <div class="fg-g full"><label>Detalle de Ubicación</label><input id="mg-ubi" placeholder="Descripción de dónde está el gabinete"></div>
-    </div>
-    <div class="section-lbl" style="margin:10px 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3)">Equipamiento del gabinete</div>
-    <div class="fg" style="grid-template-columns:1fr 1fr 1fr 1fr">
-      <div class="fg-g">
-        <label>🚿 Manguera</label>
-        <select id="mg-man" style="font-size:13px">
-          <option value="SÍ">SÍ</option>
-          <option value="NO">NO</option>
-          <option value="MAL ESTADO">MAL ESTADO</option>
-        </select>
-      </div>
-      <div class="fg-g">
-        <label>💧 Pitón</label>
-        <select id="mg-pit" style="font-size:13px">
-          <option value="SÍ">SÍ</option>
-          <option value="NO">NO</option>
-        </select>
-      </div>
-      <div class="fg-g">
-        <label>🪓 Hacha</label>
-        <select id="mg-hac" style="font-size:13px">
-          <option value="SÍ">SÍ</option>
-          <option value="NO">NO</option>
-        </select>
-      </div>
-      <div class="fg-g">
-        <label>🧯 Extintor</label>
-        <select id="mg-ext" style="font-size:13px">
-          <option value="SÍ">SÍ</option>
-          <option value="NO">NO</option>
-        </select>
-      </div>
-    </div>
-    <div class="section-lbl" style="margin:10px 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3)">Extintor del gabinete</div>
-    <div class="fg">
-      <div class="fg-g">
-        <label>Tipo de agente</label>
-        <select id="mg-tip">
-          <option value="PQS">PQS</option>
-          <option value="CO2">CO2</option>
-          <option value="FOAM">FOAM</option>
-          <option value="K">K</option>
-          <option value="Agua">Agua</option>
-          <option value="—">N/A</option>
-        </select>
-      </div>
-      <div class="fg-g"><label>Capacidad</label><input id="mg-cap" placeholder="Ej: 10 lb, 20 lb"></div>
-      <div class="fg-g"><label>Última recarga (MM/AAAA)</label><input id="mg-ult" type="month"></div>
-      <div class="fg-g"><label>Próxima recarga / Vencimiento</label><input id="mg-prx" type="month"></div>
-      <div class="fg-g full"><label>Observaciones</label><textarea id="mg-obs" rows="2" placeholder="Notas sobre el estado del gabinete..."></textarea></div>
-    </div>
-  </div>
-  <div class="fmod-ft">
-    <button class="top-btn top-btn-sec" onclick="close_('m-gab-form')">Cancelar</button>
-    <button class="top-btn top-btn-pri" onclick="guardarGabinete()">💾 Guardar gabinete</button>
-  </div>
-</div>
-</div>
-
-</body></html>`);
+</html>`);
   w.document.close();
 }
 function printAll(){
@@ -2297,5 +2224,78 @@ function confirmarAddBodega(){
 </div>
 
 <input type="file" id="imp-global" accept=".json" style="display:none" onchange="importJSON(this)">
+
+<!-- GABINETE FORM MODAL -->
+<div class="mbg" id="m-gab-form">
+<div class="fmodal" style="max-width:520px">
+  <div class="fmod-hd">
+    <span style="font-size:20px">🚰</span>
+    <h2 id="mg-title">Registrar Gabinete</h2>
+    <button class="mclose" onclick="close_('m-gab-form')">×</button>
+  </div>
+  <div class="fmod-body">
+    <div class="fg">
+      <div class="fg-g"><label>N° Gabinete *</label><input id="mg-num" placeholder="Ej: 1, S/N-01"></div>
+      <div class="fg-g"><label>Centro de Costo</label><input id="mg-cc" placeholder="Ej: 3010"></div>
+      <div class="fg-g full"><label>Detalle de Ubicación</label><input id="mg-ubi" placeholder="Descripción de dónde está el gabinete"></div>
+    </div>
+    <div class="section-lbl" style="margin:10px 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3)">Equipamiento del gabinete</div>
+    <div class="fg" style="grid-template-columns:1fr 1fr 1fr 1fr">
+      <div class="fg-g">
+        <label>🚿 Manguera</label>
+        <select id="mg-man" style="font-size:13px">
+          <option value="SÍ">SÍ</option>
+          <option value="NO">NO</option>
+          <option value="MAL ESTADO">MAL ESTADO</option>
+        </select>
+      </div>
+      <div class="fg-g">
+        <label>💧 Pitón</label>
+        <select id="mg-pit" style="font-size:13px">
+          <option value="SÍ">SÍ</option>
+          <option value="NO">NO</option>
+        </select>
+      </div>
+      <div class="fg-g">
+        <label>🪓 Hacha</label>
+        <select id="mg-hac" style="font-size:13px">
+          <option value="SÍ">SÍ</option>
+          <option value="NO">NO</option>
+        </select>
+      </div>
+      <div class="fg-g">
+        <label>🧯 Extintor</label>
+        <select id="mg-ext" style="font-size:13px">
+          <option value="SÍ">SÍ</option>
+          <option value="NO">NO</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-lbl" style="margin:10px 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3)">Extintor del gabinete</div>
+    <div class="fg">
+      <div class="fg-g">
+        <label>Tipo de agente</label>
+        <select id="mg-tip">
+          <option value="PQS">PQS</option>
+          <option value="CO2">CO2</option>
+          <option value="FOAM">FOAM</option>
+          <option value="K">K</option>
+          <option value="Agua">Agua</option>
+          <option value="—">N/A</option>
+        </select>
+      </div>
+      <div class="fg-g"><label>Capacidad</label><input id="mg-cap" placeholder="Ej: 10 lb, 20 lb"></div>
+      <div class="fg-g"><label>Última recarga (MM/AAAA)</label><input id="mg-ult" type="month"></div>
+      <div class="fg-g"><label>Próxima recarga / Vencimiento</label><input id="mg-prx" type="month"></div>
+      <div class="fg-g full"><label>Observaciones</label><textarea id="mg-obs" rows="2" placeholder="Notas sobre el estado del gabinete..."></textarea></div>
+    </div>
+  </div>
+  <div class="fmod-ft">
+    <button class="top-btn top-btn-sec" onclick="close_('m-gab-form')">Cancelar</button>
+    <button class="top-btn top-btn-pri" onclick="guardarGabinete()">💾 Guardar gabinete</button>
+  </div>
+</div>
+</div>
+
 </body>
 </html>
