@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brigadas — 3A Core Materials · Plantabal S.A.</title>
+<style>
+:root{
+  --azul-oscuro:#1B3F7A;
+  --azul-medio:#2B6CB8;
+  --azul-claro:#4A8FD4;
+  --verde:#2BAA6E;
+  --verde-claro:#3EC47F;
+  --blanco:#FFFFFF;
+  --gris-fondo:#F4F6FA;
+  --gris-panel:#EBEEf5;
+  --gris-borde:#C8D2E5;
+  --gris-texto:#5A6A84;
+  --gris-dark:#2E3A50;
+  --rojo:#C0392B;
+  --naranja:#D4680A;
+  --naranja-soft:#F0A050;
+  --dia-bg:#FFF8E1;
+  --dia-borde:#F0B429;
+  --noche-bg:#EEF2FF;
+  --noche-borde:#4A8FD4;
+  --font-body:'Segoe UI','Arial',sans-serif;
+  --font-mono:'Consolas','Courier New',monospace;
+  --shadow:0 2px 8px rgba(27,63,122,0.10);
+  --shadow-md:0 4px 16px rgba(27,63,122,0.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font-body);background:var(--gris-fondo);color:var(--gris-dark);min-height:100vh;padding-bottom:60px;}
+
+header{background:var(--blanco);border-bottom:3px solid var(--azul-oscuro);box-shadow:var(--shadow);}
+.header-top{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;flex-wrap:wrap;gap:12px;border-bottom:1px solid var(--gris-borde);}
+.logo-area{display:flex;align-items:center;gap:16px;}
+.logo-img{height:44px;}
+.logo-divider{width:1px;height:40px;background:var(--gris-borde);}
+.brand-title{font-size:clamp(15px,2.2vw,20px);font-weight:700;color:var(--azul-oscuro);line-height:1.1;}
+.brand-sub{font-size:11px;color:var(--gris-texto);letter-spacing:.5px;text-transform:uppercase;margin-top:3px;}
+.clock-box{text-align:right;background:var(--gris-fondo);border:1px solid var(--gris-borde);padding:8px 14px;border-radius:4px;}
+.clock-box .ct{font-size:20px;font-weight:700;color:var(--azul-oscuro);font-family:var(--font-mono);}
+.clock-box .cd{font-size:11px;color:var(--gris-texto);}
+.clock-box .cw{font-size:12px;color:var(--verde);font-weight:600;margin-top:2px;}
+
+nav{background:var(--blanco);display:flex;overflow-x:auto;padding:0 28px;}
+.tab{font-size:13px;font-weight:600;color:var(--gris-texto);background:none;border:none;padding:14px 20px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;}
+.tab:hover{color:var(--azul-medio);}
+.tab.on{color:var(--azul-oscuro);border-bottom-color:var(--azul-oscuro);}
+
+main{padding:22px 28px;max-width:1300px;margin:0 auto;}
+.view{display:none;animation:fi .18s ease;}
+.view.on{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(4px);}to{opacity:1;}}
+
+.panel{background:var(--blanco);border:1px solid var(--gris-borde);border-radius:6px;margin-bottom:18px;box-shadow:var(--shadow);}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gris-borde);flex-wrap:wrap;gap:8px;}
+.ph h2{font-size:15px;font-weight:700;color:var(--azul-oscuro);display:flex;align-items:center;gap:8px;}
+.ph h2::before{content:'';display:inline-block;width:4px;height:18px;background:var(--azul-medio);border-radius:2px;}
+.pb{padding:16px 20px;}
+
+.btn{font-weight:600;font-size:13px;padding:8px 16px;border-radius:4px;border:1px solid transparent;cursor:pointer;transition:all .15s;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--azul-oscuro);color:var(--blanco);}
+.btn-primary:hover{background:var(--azul-medio);}
+.btn-ghost{background:var(--blanco);color:var(--gris-texto);border-color:var(--gris-borde);}
+.btn-ghost:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
+.btn-danger{background:var(--blanco);color:var(--rojo);border-color:var(--rojo);}
+.btn-danger:hover{background:var(--rojo);color:var(--blanco);}
+.btn-verde{background:var(--verde);color:var(--blanco);}
+.btn-verde:hover{background:var(--verde-claro);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px;}
+.stat{background:var(--blanco);border:1px solid var(--gris-borde);border-radius:6px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--azul-medio);}
+.stat .n{font-size:32px;font-weight:700;color:var(--azul-oscuro);line-height:1;}
+.stat .l{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--gris-texto);margin-top:6px;}
+
+/* SEMANA NAV */
+.semana-nav{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;background:var(--blanco);border:1px solid var(--gris-borde);border-radius:6px;padding:12px 16px;box-shadow:var(--shadow);}
+.semana-nav button{background:var(--blanco);border:1px solid var(--gris-borde);color:var(--azul-oscuro);padding:7px 14px;cursor:pointer;border-radius:4px;font-size:13px;font-weight:600;transition:all .15s;}
+.semana-nav button:hover{background:var(--azul-oscuro);color:var(--blanco);}
+.semana-badge{font-size:18px;font-weight:700;color:var(--azul-oscuro);}
+.semana-dates{font-size:11px;color:var(--gris-texto);margin-top:2px;}
+.semana-rot{margin-left:auto;background:var(--gris-fondo);border:1px solid var(--gris-borde);padding:6px 14px;border-radius:4px;font-size:12px;color:var(--gris-texto);}
+.semana-rot b{color:var(--azul-oscuro);}
+
+/* TURNO GRID */
+.turno-section{margin-bottom:22px;}
+.turno-section-title{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gris-texto);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--gris-borde);display:flex;align-items:center;gap:8px;}
+.turno-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
+
+.turno-card{border-radius:6px;padding:15px;border:1px solid var(--gris-borde);background:var(--blanco);box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.turno-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}
+.turno-card.dia::before{background:var(--dia-borde);}
+.turno-card.noche::before{background:var(--noche-borde);}
+.turno-card.unico::before{background:var(--verde);}
+.turno-card.pendiente::before{background:var(--naranja-soft);}
+
+.tc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.tc-slot{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:10px;}
+.tc-slot.dia{background:var(--dia-bg);color:#8B6914;border:1px solid var(--dia-borde);}
+.tc-slot.noche{background:var(--noche-bg);color:var(--azul-medio);border:1px solid var(--noche-borde);}
+.tc-slot.unico{background:#EAFAF2;color:#1A6B43;border:1px solid var(--verde);}
+.tc-slot.pendiente{background:#FFF5EB;color:var(--naranja);border:1px solid var(--naranja-soft);}
+.tc-area-badge{font-size:11px;font-weight:700;background:var(--azul-oscuro);color:var(--blanco);padding:3px 10px;border-radius:3px;}
+
+/* Supervisor box dentro de la card */
+.tc-sup-box{background:var(--gris-fondo);border:1px solid var(--gris-borde);border-left:3px solid var(--azul-medio);padding:8px 10px;border-radius:3px;margin-bottom:10px;}
+.tc-sup-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gris-texto);margin-bottom:2px;}
+.tc-sup-name{font-size:14px;font-weight:700;color:var(--azul-oscuro);}
+
+/* Lista brigadistas */
+.tc-brig-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gris-texto);margin-bottom:6px;}
+.tc-brig-item{font-size:12px;padding:4px 0;color:var(--gris-dark);border-bottom:1px solid var(--gris-panel);display:flex;align-items:center;gap:6px;}
+.tc-brig-item:last-child{border-bottom:none;}
+.tc-brig-dot{width:6px;height:6px;border-radius:50%;background:var(--azul-claro);flex-shrink:0;}
+.tc-brig-item.lider .tc-brig-dot{background:var(--verde);}
+.tc-brig-item.lider{color:var(--azul-oscuro);font-weight:600;}
+.tc-pending-msg{font-size:11px;color:var(--naranja);margin-top:8px;font-style:italic;}
+
+/* Brigadas únicas section */
+.unicas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:10px;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gris-texto);padding:10px 12px;border-bottom:2px solid var(--gris-borde);background:var(--gris-fondo);}
+td{padding:10px 12px;border-bottom:1px solid var(--gris-borde);font-size:13px;}
+tr:hover td{background:var(--gris-fondo);}
+.ac{display:flex;gap:6px;justify-content:flex-end;}
+
+input[type=text],input[type=date],select,textarea{width:100%;background:var(--blanco);border:1px solid var(--gris-borde);color:var(--gris-dark);padding:9px 12px;font-family:var(--font-body);font-size:13px;border-radius:4px;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul-medio);box-shadow:0 0 0 2px rgba(43,108,184,0.12);}
+label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gris-texto);display:block;margin-bottom:5px;}
+.field{margin-bottom:14px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+.mb{display:none;position:fixed;inset:0;background:rgba(27,63,122,0.45);backdrop-filter:blur(2px);z-index:50;align-items:center;justify-content:center;padding:16px;}
+.mb.on{display:flex;}
+.modal{background:var(--blanco);border-radius:8px;border-top:4px solid var(--azul-oscuro);max-width:500px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-md);}
+.mh{padding:16px 20px;border-bottom:1px solid var(--gris-borde);display:flex;justify-content:space-between;align-items:center;}
+.mh h3{font-size:16px;font-weight:700;color:var(--azul-oscuro);}
+.mc-btn{background:none;border:none;color:var(--gris-texto);font-size:22px;cursor:pointer;line-height:1;}
+.mc-btn:hover{color:var(--rojo);}
+.mbody{padding:20px;}
+.mfoot{padding:14px 20px;border-top:1px solid var(--gris-borde);display:flex;justify-content:flex-end;gap:10px;background:var(--gris-fondo);border-radius:0 0 8px 8px;}
+
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:.3px;padding:3px 10px;border-radius:10px;}
+.tag-i{background:#FDECEA;color:#B71C1C;border:1px solid #EFACAA;}
+.tag-p{background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;}
+.tag-e{background:#E3F0FB;color:var(--azul-oscuro);border:1px solid var(--gris-borde);}
+.tag-s{background:#FFF8E1;color:#8B6914;border:1px solid #F0B429;}
+
+.cap-card{border:1px solid var(--gris-borde);border-left:4px solid var(--azul-medio);background:var(--blanco);border-radius:4px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow);}
+.cap-card:hover{border-left-color:var(--azul-oscuro);box-shadow:var(--shadow-md);}
+.cap-card.realizada{border-left-color:var(--verde);}
+.cap-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+.cap-tema{font-size:15px;font-weight:700;color:var(--azul-oscuro);}
+.cap-meta{display:flex;gap:10px;margin-top:7px;font-size:11px;color:var(--gris-texto);flex-wrap:wrap;align-items:center;}
+.sw-pill{background:var(--azul-oscuro);color:var(--blanco);padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;}
+
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;}
+.pill-p{background:#FFF8E1;color:#8B6914;border:1px solid #F0B429;}
+.pill-r{background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;}
+
+.att-list{max-height:320px;overflow-y:auto;border:1px solid var(--gris-borde);border-radius:4px;}
+.att-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--gris-borde);font-size:13px;transition:background .1s;}
+.att-row:last-child{border-bottom:none;}
+.att-row.out{opacity:.45;background:var(--gris-fondo);}
+.att-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--verde);cursor:pointer;}
+.att-name{flex:1;font-weight:500;}
+.att-meta{font-size:10px;color:var(--gris-texto);font-family:var(--font-mono);}
+.att-sum{margin-top:10px;padding:8px 12px;background:var(--gris-fondo);border-radius:4px;font-size:12px;color:var(--gris-texto);}
+
+.sb{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.sb input,.sb select{flex:1;min-width:160px;}
+.empty{text-align:center;padding:40px 20px;color:var(--gris-texto);}
+.empty .eb{font-size:17px;font-weight:700;color:var(--azul-medio);margin-bottom:6px;}
+
+.caps-semana-title{font-size:12px;font-weight:700;color:var(--azul-oscuro);text-transform:uppercase;letter-spacing:.5px;margin:8px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--azul-medio);}
+
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--gris-fondo);}
+::-webkit-scrollbar-thumb{background:var(--gris-borde);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--azul-medio);}
+
+@media(max-width:600px){
+  .header-top,main{padding:12px 14px;}
+  nav{padding:0 14px;}
+  .fr{grid-template-columns:1fr;}
+  .tab{padding:12px 14px;font-size:12px;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <div class="logo-area">
+      <svg class="logo-img" width="160" height="44" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="3A Core Materials">
+        <clipPath id="clip3ab"><rect x="0" y="2" width="38" height="30" rx="1"/></clipPath>
+        <rect x="0" y="2" width="38" height="30" rx="1" fill="#1A5CA8"/>
+        <g clip-path="url(#clip3ab)" opacity=".18">
+          <line x1="-4" y1="36" x2="42" y2="-10" stroke="white" stroke-width="3.5"/>
+          <line x1="4"  y1="36" x2="50" y2="-10" stroke="white" stroke-width="3.5"/>
+          <line x1="12" y1="36" x2="58" y2="-10" stroke="white" stroke-width="3.5"/>
+          <line x1="20" y1="36" x2="66" y2="-10" stroke="white" stroke-width="3.5"/>
+          <line x1="28" y1="36" x2="74" y2="-10" stroke="white" stroke-width="3.5"/>
+          <line x1="-12" y1="36" x2="34" y2="-10" stroke="white" stroke-width="3.5"/>
+          <line x1="-20" y1="36" x2="26" y2="-10" stroke="white" stroke-width="3.5"/>
+        </g>
+        <text x="19" y="25" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="18" fill="white" letter-spacing="-1">3A</text>
+        <text x="19" y="36" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="5.5" fill="white" letter-spacing="1.5">COMPOSITES</text>
+        <text x="46" y="22" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="16" fill="#1A3F72" letter-spacing=".5">CORE</text>
+        <text x="46" y="35" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="12" fill="#2BAA8C" letter-spacing=".3">MATERIALS</text>
+      </svg>
+      <div class="logo-divider"></div>
+      <div>
+        <div class="brand-title">Control de Brigadas — Plantabal S.A.</div>
+        <div class="brand-sub">SST · Turnos rotativos · Capacitaciones · Bitácora</div>
+      </div>
+    </div>
+    <div class="clock-box">
+      <div class="cd" id="cdate">—</div>
+      <div class="ct" id="ctime">--:--</div>
+      <div class="cw" id="cweek">Semana —</div>
+    </div>
+  </div>
+  <nav>
+    <button class="tab on" data-v="turno">Turno actual</button>
+    <button class="tab" data-v="brigadistas">Brigadistas</button>
+    <button class="tab" data-v="capacitaciones">Capacitaciones</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- TURNO SEMANAL -->
+<section class="view on" id="view-turno">
+  <div class="semana-nav">
+    <button id="sw-prev">&#8592; Anterior</button>
+    <div>
+      <div class="semana-badge" id="sw-label">Semana —</div>
+      <div class="semana-dates" id="sw-dates">—</div>
+    </div>
+    <button id="sw-next">Siguiente &#8594;</button>
+    <button id="sw-hoy">Hoy</button>
+    <div class="semana-rot" id="sw-rot"></div>
+  </div>
+  <div id="turno-content"></div>
+</section>
+
+<!-- BRIGADISTAS -->
+<section class="view" id="view-brigadistas">
+  <div class="stats" id="stats-b"></div>
+  <div class="panel">
+    <div class="ph"><h2>Brigadistas</h2><button class="btn btn-primary" id="btn-add-b">+ Añadir brigadista</button></div>
+    <div class="pb">
+      <div class="sb">
+        <input type="text" id="fn" placeholder="Buscar por nombre...">
+        <select id="fb">
+          <option value="">Todas las brigadas</option>
+          <option value="Contra Incendios">Contra Incendios</option>
+          <option value="Primeros Auxilios">Primeros Auxilios</option>
+          <option value="Evacuación y Rescate">Evacuación y Rescate</option>
+        </select>
+      </div>
+      <table><thead><tr><th>Apellidos y Nombres</th><th>Brigada</th><th>Turno</th><th>Área</th><th></th></tr></thead>
+      <tbody id="tb-b"></tbody></table>
+      <div class="empty" id="emp-b" style="display:none;"><div class="eb">Sin resultados</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CAPACITACIONES -->
+<section class="view" id="view-capacitaciones">
+  <div class="panel">
+    <div class="ph"><h2>Capacitaciones</h2><button class="btn btn-primary" id="btn-add-c">+ Nueva capacitación</button></div>
+    <div class="pb" id="lista-caps"></div>
+    <div class="empty" id="emp-c" style="display:none;padding:20px;"><div class="eb">Sin capacitaciones</div><div>Crea la primera para planificar.</div></div>
+  </div>
+</section>
+
+</main>
+
+<!-- MODAL BRIGADISTA -->
+<div class="mb" id="mod-b">
+  <div class="modal">
+    <div class="mh"><h3 id="mod-b-title">Añadir brigadista</h3><button class="mc-btn" data-cl="mod-b">&times;</button></div>
+    <div class="mbody">
+      <input type="hidden" id="b-id">
+      <div class="field"><label>Apellidos y nombres</label><input type="text" id="b-nombre"></div>
+      <div class="fr">
+        <div class="field"><label>Brigada</label>
+          <select id="b-brigada">
+            <option value="Contra Incendios">Contra Incendios</option>
+            <option value="Primeros Auxilios">Primeros Auxilios</option>
+            <option value="Evacuación y Rescate">Evacuación y Rescate</option>
+          </select>
+        </div>
+        <div class="field"><label>Turno</label>
+          <select id="b-turno">
+            <option value="T1">T1</option>
+            <option value="T2">T2</option>
+            <option value="Único">Único</option>
+            <option value="Pendiente">Pendiente</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Área</label><input type="text" id="b-area" placeholder="Taller, D100, Encolaje, CK, MV, Caldero..."></div>
+    </div>
+    <div class="mfoot"><button class="btn btn-ghost" data-cl="mod-b">Cancelar</button><button class="btn btn-primary" id="btn-sb">Guardar</button></div>
+  </div>
+</div>
+
+<!-- MODAL CAPACITACION -->
+<div class="mb" id="mod-c">
+  <div class="modal">
+    <div class="mh"><h3>Nueva capacitación</h3><button class="mc-btn" data-cl="mod-c">&times;</button></div>
+    <div class="mbody">
+      <div class="field"><label>Tema</label><input type="text" id="c-tema" placeholder="Ej. Uso de extintores PQS"></div>
+      <div class="fr">
+        <div class="field"><label>Fecha</label><input type="date" id="c-fecha"></div>
+        <div class="field"><label>Brigada</label>
+          <select id="c-brigada">
+            <option value="Todas">Todas las brigadas</option>
+            <option value="Contra Incendios">Contra Incendios</option>
+            <option value="Primeros Auxilios">Primeros Auxilios</option>
+            <option value="Evacuación y Rescate">Evacuación y Rescate</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Notas</label><textarea id="c-notas" rows="2" placeholder="Instructor, lugar, observaciones..."></textarea></div>
+    </div>
+    <div class="mfoot"><button class="btn btn-ghost" data-cl="mod-c">Cancelar</button><button class="btn btn-primary" id="btn-sc">Crear y registrar asistencia</button></div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE -->
+<div class="mb" id="mod-det">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh"><h3 id="det-tema">—</h3><button class="mc-btn" data-cl="mod-det">&times;</button></div>
+    <div class="mbody">
+      <div class="cap-meta" id="det-meta" style="margin-bottom:16px;"></div>
+      <div class="field"><label>Estado</label>
+        <select id="det-estado"><option value="Pendiente">Pendiente</option><option value="Realizada">Realizada</option></select>
+      </div>
+      <div class="field">
+        <label>Bitácora de asistencia — todos marcados, desmarca quien faltó</label>
+        <div class="att-list" id="att-list"></div>
+        <div class="att-sum" id="att-sum"></div>
+      </div>
+    </div>
+    <div class="mfoot" style="justify-content:space-between;">
+      <button class="btn btn-danger btn-sm" id="btn-del-c">Eliminar</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" data-cl="mod-det">Cerrar</button>
+        <button class="btn btn-verde" id="btn-sdet">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATOS — extraídos del Excel Brigadas_Organizadas.xlsx
+   Supervisores/líderes NO son brigadistas.
+   ========================================================= */
+
+// Supervisores de turno por área (NO aparecen en lista de brigadistas)
+const supervisores = {
+  'Taller-T1':   { nombre: 'Roy Intriago',     rol: 'Supervisor / Líder de producción' },
+  'Taller-T2':   { nombre: 'Bryan Chevez',      rol: 'Supervisor / Líder de producción' },
+  'Encolaje-T1': { nombre: 'Roy Intriago',      rol: 'Supervisor / Líder de producción' },
+  'Encolaje-T2': { nombre: 'Bryan Chevez',      rol: 'Supervisor / Líder de producción' },
+  'D100-T1':     { nombre: 'Dario Cevallos',    rol: 'Líder de turno' },
+  'D100-T2':     { nombre: 'Joffre Cedeño',     rol: 'Líder de turno' },
+  'CK-Único':    { nombre: 'Delcito Zambrano',  rol: 'Líder de turno' },
+  'MV-Único':    { nombre: 'Cristian Velez',    rol: 'Líder de turno' },
+  'Caldero-Pendiente': { nombre: 'Cristian Velez', rol: 'Líder de turno' },
+  // Primeros Auxilios - referencia de supervisor
+  'PA-Taller':   { nombre: 'Roy Intriago',      rol: 'Referencia de turno' },
+  'PA-D100':     { nombre: 'Dario Cevallos',    rol: 'Referencia de turno' },
+  'PA-CK':       { nombre: 'Delcito Zambrano',  rol: 'Referencia de turno' },
+  // Evacuación y Rescate
+  'ER-Taller':   { nombre: 'Roy Intriago',      rol: 'Referencia de turno' },
+  'ER-D100':     { nombre: 'Dario Cevallos',    rol: 'Referencia de turno' },
+  'ER-MV':       { nombre: 'Cristian Velez',    rol: 'Referencia de turno' },
+};
+
+let brigadistas = [
+  // --- Contra Incendios — Taller y Encolaje ---
+  {id:'b1',  nombre:'Pinargote Cristhian',           brigada:'Contra Incendios', turno:'T1', area:'Taller'},
+  {id:'b2',  nombre:'Salvatierra Pastor',             brigada:'Contra Incendios', turno:'T1', area:'Taller'},
+  {id:'b3',  nombre:'Montece Luis',                   brigada:'Contra Incendios', turno:'T1', area:'Taller'},
+  {id:'b4',  nombre:'Coronel Dember',                 brigada:'Contra Incendios', turno:'T1', area:'Taller'},
+  {id:'b5',  nombre:'Chevez Ube Cristhian',           brigada:'Contra Incendios', turno:'T1', area:'Taller'},
+  {id:'b8',  nombre:'Pacheco Murillo Ronald Antonio', brigada:'Contra Incendios', turno:'T2', area:'Taller'},
+  {id:'b9',  nombre:'Abad Pino Ariel Dario',          brigada:'Contra Incendios', turno:'T2', area:'Taller'},
+  {id:'b10', nombre:'Rodriguez Fernandez Johao Alexander', brigada:'Contra Incendios', turno:'T2', area:'Taller'},
+  {id:'b11', nombre:'Arias Aviles Andres Armando',    brigada:'Contra Incendios', turno:'T2', area:'Taller'},
+  {id:'b12', nombre:'Mendoza Bravo Jefferson Hiroito',brigada:'Contra Incendios', turno:'T2', area:'Encolaje'},
+  // --- Contra Incendios — D100 ---
+  {id:'b6',  nombre:'Rizzo David',                    brigada:'Contra Incendios', turno:'T1', area:'D100'},
+  {id:'b20', nombre:'Intriago Miguel',                brigada:'Contra Incendios', turno:'T1', area:'D100'},
+  {id:'b13', nombre:'Cedeño Bernita Joffre',          brigada:'Contra Incendios', turno:'T2', area:'D100'},
+  {id:'b14', nombre:'Murillo Murillo Carlos Xavier',  brigada:'Contra Incendios', turno:'T2', area:'D100'},
+  // --- Contra Incendios — CK ---
+  {id:'b15', nombre:'Viteri Rodriguez Cesar',         brigada:'Contra Incendios', turno:'Único', area:'CK'},
+  // --- Contra Incendios — MV y Secado ---
+  {id:'b16', nombre:'Josefat Pino',                   brigada:'Contra Incendios', turno:'Único', area:'MV'},
+  // --- Contra Incendios — Caldero ---
+  {id:'b17', nombre:'Ordoñez Samir',                  brigada:'Contra Incendios', turno:'Pendiente', area:'Caldero'},
+  {id:'b18', nombre:'Cordova Eduardo',                brigada:'Contra Incendios', turno:'Pendiente', area:'Caldero'},
+  {id:'b19', nombre:'Vela Ronep',                     brigada:'Contra Incendios', turno:'Pendiente', area:'Caldero'},
+  {id:'b21', nombre:'Giler Pablo',                    brigada:'Contra Incendios', turno:'Pendiente', area:'Caldero'},
+  // --- Primeros Auxilios ---
+  {id:'b23', nombre:'Coronel Miguel',                 brigada:'Primeros Auxilios', turno:'Único', area:'Taller'},
+  {id:'b24', nombre:'Lozano Iris',                    brigada:'Primeros Auxilios', turno:'Único', area:'Taller'},
+  {id:'b25', nombre:'Zavala Erwin',                   brigada:'Primeros Auxilios', turno:'Único', area:'Encolaje'},
+  {id:'b26', nombre:'Martinez Rolando',               brigada:'Primeros Auxilios', turno:'Único', area:'Encolaje'},
+  {id:'b27', nombre:'Cevallos Dario',                 brigada:'Primeros Auxilios', turno:'Único', area:'D100'},
+  {id:'b39', nombre:'Flores Ganchozo Omar',           brigada:'Primeros Auxilios', turno:'Único', area:'CK'},
+  // --- Evacuación y Rescate ---
+  {id:'b28', nombre:'Ugsha Eveling',                  brigada:'Evacuación y Rescate', turno:'Único', area:'Taller'},
+  {id:'b29', nombre:'Solorzano Juan',                 brigada:'Evacuación y Rescate', turno:'Único', area:'Taller'},
+  {id:'b30', nombre:'Briones Jesus',                  brigada:'Evacuación y Rescate', turno:'Único', area:'Encolaje'},
+  {id:'b31', nombre:'Oña Franklin',                   brigada:'Evacuación y Rescate', turno:'Único', area:'Encolaje'},
+  {id:'b32', nombre:'Mendoza Jhon',                   brigada:'Evacuación y Rescate', turno:'Único', area:'D100'},
+  {id:'b47', nombre:'Baquerizo Luis',                 brigada:'Evacuación y Rescate', turno:'Único', area:'MV'},
+];
+
+let capacitaciones = [];
+let currentDetId = null;
+
+/* =========================================================
+   FECHA / SEMANA ISO
+   ========================================================= */
+function isoWeek(d){
+  const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const day=dt.getUTCDay()||7; dt.setUTCDate(dt.getUTCDate()+4-day);
+  const y1=new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  return Math.ceil((((dt-y1)/86400000)+1)/7);
+}
+function isoYear(d){
+  const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const day=dt.getUTCDay()||7; dt.setUTCDate(dt.getUTCDate()+4-day);
+  return dt.getUTCFullYear();
+}
+function weekDates(year,week){
+  const jan4=new Date(Date.UTC(year,0,4));
+  const s1=jan4.getTime()-((jan4.getUTCDay()||7)-1)*86400000;
+  const start=new Date(s1+(week-1)*7*86400000);
+  return{start, end:new Date(start.getTime()+6*86400000)};
+}
+function fmtD(d){return d.toLocaleDateString('es-EC',{day:'numeric',month:'short',year:'numeric'});}
+function fmtFecha(iso){
+  if(!iso)return'Sin fecha';
+  const[y,m,d]=iso.split('-');
+  return`${d} ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m,10)-1]} ${y}`;
+}
+function uid(){return'x'+Math.random().toString(36).slice(2,9);}
+// Semana IMPAR → T1=día, T2=noche | PAR → T2=día, T1=noche
+function horario(turno,semana){
+  const im=semana%2!==0;
+  if(turno==='T1')return im?'dia':'noche';
+  if(turno==='T2')return im?'noche':'dia';
+  return turno==='Único'?'unico':'pendiente';
+}
+
+/* RELOJ */
+function tick(){
+  const n=new Date();
+  document.getElementById('ctime').textContent=n.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('cdate').textContent=n.toLocaleDateString('es-EC',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('cweek').textContent=`Semana ${isoWeek(n)} · ${n.getFullYear()}`;
+}
+tick(); setInterval(tick,30000);
+
+/* NAV */
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+    btn.classList.add('on');
+    document.getElementById('view-'+btn.dataset.v).classList.add('on');
+    if(btn.dataset.v==='turno') renderTurno();
+    if(btn.dataset.v==='brigadistas') renderBrigadistas();
+    if(btn.dataset.v==='capacitaciones') renderCaps();
+  });
+});
+document.querySelectorAll('[data-cl]').forEach(el=>el.addEventListener('click',()=>closeModal(el.dataset.cl)));
+function openModal(id){document.getElementById(id).classList.add('on');}
+function closeModal(id){document.getElementById(id).classList.remove('on');}
+
+/* =========================================================
+   RENDER TURNO
+   ========================================================= */
+let vYear=isoYear(new Date()), vWeek=isoWeek(new Date());
+document.getElementById('sw-prev').addEventListener('click',()=>{vWeek--;if(vWeek<1){vYear--;vWeek=isoWeek(new Date(vYear,11,28));}renderTurno();});
+document.getElementById('sw-next').addEventListener('click',()=>{vWeek++;const lw=isoWeek(new Date(vYear,11,28));if(vWeek>lw){vYear++;vWeek=1;}renderTurno();});
+document.getElementById('sw-hoy').addEventListener('click',()=>{vYear=isoYear(new Date());vWeek=isoWeek(new Date());renderTurno();});
+
+function mkCard(slot, areaNombre, supKey, miembros){
+  const sup = supervisores[supKey] || null;
+  const card = document.createElement('div');
+  card.className = `turno-card ${slot}`;
+  let html = `<div class="tc-head"><span class="tc-slot ${slot}">${slot==='dia'?'☀ Día':slot==='noche'?'🌙 Noche':slot==='unico'?'⚡ Único':'⏳ Pendiente'}</span><span class="tc-area-badge">${areaNombre}</span></div>`;
+  if(sup){
+    html+=`<div class="tc-sup-box"><div class="tc-sup-label">Supervisor / Líder</div><div class="tc-sup-name">${sup.nombre}</div></div>`;
+  }
+  if(miembros.length){
+    html+=`<div class="tc-brig-label">Brigadistas</div>`;
+    miembros.forEach(b=>{
+      html+=`<div class="tc-brig-item"><span class="tc-brig-dot"></span>${b.nombre}</div>`;
+    });
+  } else {
+    html+=`<div style="font-size:12px;color:var(--gris-texto);margin-top:6px;">Sin brigadistas asignados</div>`;
+  }
+  if(slot==='pendiente') html+=`<p class="tc-pending-msg">Planificación de turno pendiente</p>`;
+  card.innerHTML=html;
+  return card;
+}
+
+function renderTurno(){
+  const{start,end}=weekDates(vYear,vWeek);
+  document.getElementById('sw-label').textContent=`Semana ${vWeek} — ${vYear}`;
+  document.getElementById('sw-dates').textContent=`${fmtD(start)} al ${fmtD(end)}`;
+  const im=vWeek%2!==0;
+  document.getElementById('sw-rot').innerHTML=`<b>T1 (Roy):</b> ${im?'☀ Día':'🌙 Noche'} &nbsp;|&nbsp; <b>T2 (Bryan):</b> ${im?'🌙 Noche':'☀ Día'}`;
+
+  const cont = document.getElementById('turno-content');
+  cont.innerHTML='';
+
+  // === SECCIÓN 1: CONTRA INCENDIOS ===
+  const sec1 = document.createElement('div');
+  sec1.className='turno-section';
+  sec1.innerHTML='<div class="turno-section-title">🔥 Brigada Contra Incendios</div>';
+  const grid1 = document.createElement('div');
+  grid1.className='turno-grid';
+
+  const areas = ['Taller','Encolaje','D100','CK','MV','Caldero'];
+  areas.forEach(area=>{
+    const miembrosArea = brigadistas.filter(b=>b.brigada==='Contra Incendios'&&b.area===area);
+    if(!miembrosArea.length) return;
+
+    if(area==='Taller'||area==='Encolaje'||area==='D100'){
+      // Tiene rotación T1/T2
+      ['T1','T2'].forEach(t=>{
+        const slot = horario(t, vWeek);
+        const miem = miembrosArea.filter(b=>b.turno===t);
+        const supKey = `${area}-${t}`;
+        grid1.appendChild(mkCard(slot, area, supKey, miem));
+      });
+    } else if(area==='Caldero'){
+      const miem = miembrosArea.filter(b=>b.turno==='Pendiente');
+      grid1.appendChild(mkCard('pendiente', area, 'Caldero-Pendiente', miem));
+    } else {
+      // CK, MV — único
+      const miem = miembrosArea.filter(b=>b.turno==='Único');
+      grid1.appendChild(mkCard('unico', area, `${area}-Único`, miem));
+    }
+  });
+  sec1.appendChild(grid1);
+  cont.appendChild(sec1);
+
+  // === SECCIÓN 2: PRIMEROS AUXILIOS ===
+  const sec2 = document.createElement('div');
+  sec2.className='turno-section';
+  sec2.innerHTML='<div class="turno-section-title">🏥 Brigada Primeros Auxilios</div>';
+  const grid2 = document.createElement('div');
+  grid2.className='turno-grid';
+  const areasPa = ['Taller','Encolaje','D100','CK'];
+  areasPa.forEach(area=>{
+    const miem = brigadistas.filter(b=>b.brigada==='Primeros Auxilios'&&b.area===area);
+    if(!miem.length) return;
+    const supKey = `PA-${area}`;
+    grid2.appendChild(mkCard('unico', area, supKey, miem));
+  });
+  sec2.appendChild(grid2);
+  cont.appendChild(sec2);
+
+  // === SECCIÓN 3: EVACUACIÓN Y RESCATE ===
+  const sec3 = document.createElement('div');
+  sec3.className='turno-section';
+  sec3.innerHTML='<div class="turno-section-title">🚨 Brigada Evacuación y Rescate</div>';
+  const grid3 = document.createElement('div');
+  grid3.className='turno-grid';
+  const areasEr = ['Taller','Encolaje','D100','MV'];
+  areasEr.forEach(area=>{
+    const miem = brigadistas.filter(b=>b.brigada==='Evacuación y Rescate'&&b.area===area);
+    if(!miem.length) return;
+    const supKey = `ER-${area}`;
+    grid3.appendChild(mkCard('unico', area, supKey, miem));
+  });
+  sec3.appendChild(grid3);
+  cont.appendChild(sec3);
+
+  // === Capacitaciones de esta semana ===
+  const capsW=capacitaciones.filter(c=>{
+    if(!c.fecha)return false;
+    const fd=new Date(c.fecha+'T12:00:00');
+    return isoWeek(fd)===vWeek&&isoYear(fd)===vYear;
+  });
+  if(capsW.length){
+    const sec4=document.createElement('div');
+    sec4.className='turno-section';
+    sec4.innerHTML='<div class="caps-semana-title">📋 Capacitaciones de esta semana</div>';
+    capsW.forEach(c=>{
+      const asist=c.asistencia.filter(a=>a.presente).length;
+      const div=document.createElement('div');
+      div.className='cap-card'+(c.estado==='Realizada'?' realizada':'');
+      div.innerHTML=`<div class="cap-top"><div><div class="cap-tema">${c.tema}</div><div class="cap-meta"><span>📅 ${fmtFecha(c.fecha)}</span><span class="sw-pill">S${vWeek}·${vYear}</span><span>${c.brigada}</span><span>👥 ${asist}/${c.asistencia.length}</span></div></div><span class="pill pill-${c.estado==='Realizada'?'r':'p'}">${c.estado}</span></div>`;
+      div.addEventListener('click',()=>openDetalle(c.id));
+      sec4.appendChild(div);
+    });
+    cont.appendChild(sec4);
+  }
+}
+
+/* =========================================================
+   BRIGADISTAS
+   ========================================================= */
+function tagClass(b){return b==='Contra Incendios'?'tag-i':b==='Primeros Auxilios'?'tag-p':'tag-e';}
+
+function renderBrigadistas(){
+  const filtN=document.getElementById('fn').value.toLowerCase();
+  const filtB=document.getElementById('fb').value;
+  const lista=brigadistas.filter(b=>(!filtN||b.nombre.toLowerCase().includes(filtN))&&(!filtB||b.brigada===filtB))
+    .sort((a,b)=>a.brigada.localeCompare(b.brigada)||a.area.localeCompare(b.area)||a.nombre.localeCompare(b.nombre));
+
+  const conts={};
+  brigadistas.forEach(b=>{conts[b.brigada]=(conts[b.brigada]||0)+1;});
+  document.getElementById('stats-b').innerHTML=
+    `<div class="stat"><div class="n">${brigadistas.length}</div><div class="l">Total brigadistas</div></div>`+
+    Object.entries(conts).map(([k,v])=>`<div class="stat"><div class="n">${v}</div><div class="l">${k}</div></div>`).join('');
+
+  document.getElementById('emp-b').style.display=lista.length?'none':'block';
+  const tb=document.getElementById('tb-b');
+  tb.innerHTML='';
+  lista.forEach(b=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-weight:500;">${b.nombre}</td><td><span class="tag ${tagClass(b.brigada)}">${b.brigada}</span></td><td>${b.turno}</td><td>${b.area}</td>
+      <td class="ac"><button class="btn btn-ghost btn-sm" data-ed="${b.id}">Editar</button><button class="btn btn-danger btn-sm" data-dl="${b.id}">Eliminar</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('[data-ed]').forEach(btn=>btn.addEventListener('click',()=>openBModal(btn.dataset.ed)));
+  tb.querySelectorAll('[data-dl]').forEach(btn=>btn.addEventListener('click',()=>{
+    if(confirm('¿Eliminar este brigadista?')){brigadistas=brigadistas.filter(x=>x.id!==btn.dataset.dl);renderBrigadistas();}
+  }));
+}
+document.getElementById('fn').addEventListener('input',renderBrigadistas);
+document.getElementById('fb').addEventListener('change',renderBrigadistas);
+
+function openBModal(id){
+  if(id){
+    const b=brigadistas.find(x=>x.id===id);
+    document.getElementById('mod-b-title').textContent='Editar brigadista';
+    document.getElementById('b-id').value=b.id;
+    document.getElementById('b-nombre').value=b.nombre;
+    document.getElementById('b-brigada').value=b.brigada;
+    document.getElementById('b-turno').value=b.turno;
+    document.getElementById('b-area').value=b.area;
+  }else{
+    document.getElementById('mod-b-title').textContent='Añadir brigadista';
+    ['b-id','b-nombre','b-area'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('b-brigada').value='Contra Incendios';
+    document.getElementById('b-turno').value='T1';
+  }
+  openModal('mod-b');
+}
+document.getElementById('btn-add-b').addEventListener('click',()=>openBModal(null));
+document.getElementById('btn-sb').addEventListener('click',()=>{
+  const nombre=document.getElementById('b-nombre').value.trim();
+  if(!nombre){alert('Ingresa el nombre.');return;}
+  const id=document.getElementById('b-id').value;
+  const data={nombre,brigada:document.getElementById('b-brigada').value,turno:document.getElementById('b-turno').value,area:document.getElementById('b-area').value.trim()||'—'};
+  if(id)Object.assign(brigadistas.find(x=>x.id===id),data);
+  else brigadistas.push({id:uid(),...data});
+  closeModal('mod-b');renderBrigadistas();renderTurno();
+});
+
+/* =========================================================
+   CAPACITACIONES
+   ========================================================= */
+function renderCaps(){
+  const cont=document.getElementById('lista-caps');
+  cont.innerHTML='';
+  const ord=[...capacitaciones].sort((a,b)=>(a.fecha||'9999').localeCompare(b.fecha||'9999'));
+  document.getElementById('emp-c').style.display=ord.length?'none':'block';
+  ord.forEach(c=>{
+    const asist=c.asistencia.filter(a=>a.presente).length;
+    const fd=c.fecha?new Date(c.fecha+'T12:00:00'):null;
+    const sw=fd?`S${isoWeek(fd)}·${isoYear(fd)}`:'—';
+    const div=document.createElement('div');
+    div.className='cap-card'+(c.estado==='Realizada'?' realizada':'');
+    div.innerHTML=`<div class="cap-top"><div><div class="cap-tema">${c.tema}</div><div class="cap-meta"><span>📅 ${fmtFecha(c.fecha)}</span><span class="sw-pill">${sw}</span><span class="tag ${tagClass(c.brigada==='Todas'?'Contra Incendios':c.brigada)}">${c.brigada}</span><span>👥 ${asist}/${c.asistencia.length}</span>${c.notas?`<span title="${c.notas}">📝 ${c.notas.slice(0,35)}${c.notas.length>35?'…':''}</span>`:''}</div></div><span class="pill pill-${c.estado==='Realizada'?'r':'p'}">${c.estado}</span></div>`;
+    div.addEventListener('click',()=>openDetalle(c.id));
+    cont.appendChild(div);
+  });
+}
+document.getElementById('btn-add-c').addEventListener('click',()=>{
+  ['c-tema','c-notas'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('c-fecha').value='';
+  document.getElementById('c-brigada').value='Todas';
+  openModal('mod-c');
+});
+document.getElementById('btn-sc').addEventListener('click',()=>{
+  const tema=document.getElementById('c-tema').value.trim();
+  if(!tema){alert('Ingresa el tema.');return;}
+  const brigada=document.getElementById('c-brigada').value;
+  const fecha=document.getElementById('c-fecha').value;
+  const notas=document.getElementById('c-notas').value.trim();
+  const participantes=brigada==='Todas'?brigadistas:brigadistas.filter(b=>b.brigada===brigada);
+  const fd=fecha?new Date(fecha+'T12:00:00'):null;
+  const nueva={id:uid(),tema,fecha,brigada,notas,estado:'Pendiente',semana:fd?isoWeek(fd):null,anio:fd?isoYear(fd):null,
+    asistencia:participantes.map(p=>({brigadistaId:p.id,presente:true}))};
+  capacitaciones.push(nueva);
+  closeModal('mod-c');renderCaps();openDetalle(nueva.id);
+});
+function openDetalle(id){
+  currentDetId=id;
+  const c=capacitaciones.find(x=>x.id===id);
+  const fd=c.fecha?new Date(c.fecha+'T12:00:00'):null;
+  const sw=fd?`Semana ${isoWeek(fd)} · ${isoYear(fd)}`:'Sin semana';
+  document.getElementById('det-tema').textContent=c.tema;
+  document.getElementById('det-estado').value=c.estado;
+  document.getElementById('det-meta').innerHTML=`<span>📅 ${fmtFecha(c.fecha)}</span><span class="sw-pill">${sw}</span><span class="tag ${tagClass(c.brigada==='Todas'?'Contra Incendios':c.brigada)}">${c.brigada}</span>${c.notas?`<div style="width:100%;margin-top:8px;color:var(--gris-texto);font-size:12px;">📝 ${c.notas}</div>`:''}`;
+  renderAtt(c);openModal('mod-det');
+}
+function renderAtt(c){
+  const list=document.getElementById('att-list');
+  list.innerHTML='';
+  c.asistencia.forEach(a=>{
+    const b=brigadistas.find(x=>x.id===a.brigadistaId);
+    if(!b)return;
+    const row=document.createElement('div');
+    row.className='att-row'+(a.presente?'':' out');
+    row.innerHTML=`<input type="checkbox" ${a.presente?'checked':''} data-bid="${a.brigadistaId}"><span class="att-name">${b.nombre}</span><span class="att-meta">${b.brigada} · ${b.turno} · ${b.area}</span>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      const c2=capacitaciones.find(x=>x.id===currentDetId);
+      const a=c2.asistencia.find(x=>x.brigadistaId===cb.dataset.bid);
+      a.presente=cb.checked;
+      cb.closest('.att-row').classList.toggle('out',!cb.checked);
+      updAtt(c2);
+    });
+  });
+  updAtt(c);
+}
+function updAtt(c){
+  const p=c.asistencia.filter(a=>a.presente).length;
+  document.getElementById('att-sum').textContent=`${p} de ${c.asistencia.length} brigadistas asistieron · ${c.asistencia.length-p} ausente(s)`;
+}
+document.getElementById('btn-sdet').addEventListener('click',()=>{
+  capacitaciones.find(x=>x.id===currentDetId).estado=document.getElementById('det-estado').value;
+  closeModal('mod-det');renderCaps();renderTurno();
+});
+document.getElementById('btn-del-c').addEventListener('click',()=>{
+  if(confirm('¿Eliminar esta capacitación?')){
+    capacitaciones=capacitaciones.filter(c=>c.id!==currentDetId);
+    closeModal('mod-det');renderCaps();renderTurno();
+  }
+});
+
+/* INIT */
+renderTurno(); renderBrigadistas(); renderCaps();
+</script>
+</body>
+</html>
