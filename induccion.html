@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Inducción EHS — Plantabal</title>
+<style>
+@page { size: A4; margin: 0 !important; }
+
+:root {
+  --deep:    #1A4731;
+  --mid:     #2E7D52;
+  --lite:    #EAF2ED;
+  --surface: #F5F8F6;
+  --card:    #FFFFFF;
+  --ink:     #0E1A14;
+  --ink2:    #3D5045;
+  --border:  #C5D9CC;
+  --danger:  #B03020;
+  --radius:  10px;
+}
+@media(prefers-color-scheme:dark){
+  :root{--surface:#0C1910;--card:#111E16;--ink:#E2EDE6;--ink2:#7FA68C;--border:#243B2C;--lite:#182A1F;--mid:#3D9966}
+}
+:root[data-theme="dark"] {--surface:#0C1910;--card:#111E16;--ink:#E2EDE6;--ink2:#7FA68C;--border:#243B2C;--lite:#182A1F;--mid:#3D9966}
+:root[data-theme="light"]{--surface:#F5F8F6;--card:#FFFFFF;--ink:#0E1A14;--ink2:#3D5045;--border:#C5D9CC;--lite:#EAF2ED;--mid:#2E7D52}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--surface);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.app-header{position:sticky;top:0;z-index:100;background:var(--deep);padding:14px 20px 0}
+.app-header-row{display:flex;align-items:center;gap:12px;padding-bottom:14px}
+.app-logo{width:38px;height:38px;background:var(--card);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.app-title h1{font-size:15px;font-weight:700;color:#fff;line-height:1.2}
+.app-title p{font-size:12px;color:rgba(255,255,255,.6);margin-top:1px}
+.progress-track{height:3px;background:rgba(255,255,255,.15);overflow:hidden}
+.progress-fill{height:100%;background:#4ECCA3;border-radius:2px;transition:width .4s cubic-bezier(.4,0,.2,1);width:0%}
+
+/* Sync status bar */
+.sync-bar{height:3px;background:transparent;transition:background .3s}
+.sync-bar.syncing{background:#E8A020}
+.sync-bar.ok{background:#4ECCA3}
+.sync-bar.err{background:#B03020}
+
+.step{display:none;padding:24px 20px;animation:in .22s ease}
+.step.active{display:block}
+@keyframes in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.step{animation:none}}
+
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);margin-bottom:4px}
+.step-title{font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:700;color:var(--ink);text-wrap:balance;line-height:1.25;margin-bottom:6px}
+.step-desc{font-size:14px;color:var(--ink2);margin-bottom:24px}
+
+/* HOME */
+.home-hero{background:var(--deep);border-radius:14px;padding:20px;margin-bottom:24px;text-align:center}
+.home-hero-icon{font-size:36px;margin-bottom:8px}
+.home-hero h2{font-family:Georgia,serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:4px}
+.home-hero p{font-size:13px;color:rgba(255,255,255,.65)}
+
+.section-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.section-badge{background:var(--mid);color:#fff;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700}
+
+.sched-empty{background:var(--card);border:1.5px dashed var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:20px}
+.sched-empty p{font-size:14px;color:var(--ink2)}
+
+.sched-list{margin-bottom:20px}
+.sched-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.sched-item:hover{border-color:var(--mid);background:var(--lite)}
+.sched-item:active{transform:scale(.98)}
+.sched-badge{width:42px;height:42px;background:var(--lite);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.sched-info{flex:1;min-width:0}
+.sched-info h3{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sched-info p{font-size:12px;color:var(--ink2);margin-top:1px}
+.sched-date{font-size:11px;color:var(--mid);font-weight:600;white-space:nowrap}
+.sched-del{width:30px;height:30px;border:none;background:transparent;color:var(--danger);cursor:pointer;border-radius:6px;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.5;transition:opacity .15s}
+.sched-del:hover{opacity:1;background:#FEE2E2}
+
+.hist-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.hist-item:hover{border-color:var(--mid);background:var(--lite)}
+.hist-item:active{transform:scale(.98)}
+.hist-badge{width:38px;height:38px;background:#E8F5E9;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.hist-info{flex:1;min-width:0}
+.hist-info h3{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-info p{font-size:11px;color:var(--ink2);margin-top:1px}
+.hist-meta{text-align:right;flex-shrink:0}
+.hist-date{font-size:11px;color:var(--mid);font-weight:600;display:block}
+.hist-tipo{font-size:10px;color:var(--ink2);margin-top:1px;display:block}
+
+/* FORM */
+.field{margin-bottom:14px}
+.field-label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px}
+.field-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:15px;color:var(--ink);background:var(--card);transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.field-input:focus{outline:none;border-color:var(--mid);box-shadow:0 0 0 3px rgba(46,125,82,.15)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tipo-group{display:flex;gap:10px;margin-bottom:18px}
+.tipo-opt{flex:1}
+.tipo-opt input[type="radio"]{position:absolute;opacity:0;width:0;height:0}
+.tipo-opt label{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:14px;font-weight:500;color:var(--ink2);background:var(--card);transition:all .15s;user-select:none}
+.tipo-opt input:checked+label{border-color:var(--mid);background:var(--lite);color:var(--deep);font-weight:700}
+.dot{width:17px;height:17px;border:2px solid var(--border);border-radius:50%;flex-shrink:0;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.tipo-opt input:checked+label .dot{border-color:var(--mid);background:var(--mid)}
+.tipo-opt input:checked+label .dot::after{content:'';width:6px;height:6px;background:#fff;border-radius:50%}
+hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+.info-card{background:var(--lite);border-radius:var(--radius);padding:13px 15px;margin-bottom:20px;border-left:3px solid var(--mid)}
+.info-card-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mid);margin-bottom:5px}
+.info-card-body{font-size:14px;color:var(--ink);line-height:1.55}
+
+/* SIGNATURE */
+.sig-wrapper{background:var(--card);border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
+.sig-canvas-area{position:relative;background:#fff}
+.sig-canvas-area canvas{display:block;width:100%;cursor:crosshair;touch-action:none}
+.sig-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:#ccc;pointer-events:none;text-align:center;transition:opacity .2s;user-select:none}
+.sig-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--border);background:var(--lite)}
+.sig-bar-label{flex:1;font-size:12px;color:var(--ink2)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border:none;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;font-family:inherit}
+.btn:focus-visible{outline:3px solid var(--mid);outline-offset:2px}
+.btn-primary{background:var(--mid);color:#fff;width:100%}
+.btn-primary:hover{background:var(--deep)}
+.btn-primary:active{background:var(--deep);transform:scale(.98)}
+.btn-ghost{background:transparent;color:var(--mid);border:1.5px solid var(--border)}
+.btn-ghost:hover{background:var(--lite)}
+.btn-del{background:transparent;color:var(--danger);border:1px solid #E0B0AC;font-size:13px;padding:7px 13px}
+.btn-print{background:var(--deep);color:#fff;width:100%;font-size:16px;padding:15px 20px}
+.btn-print:hover{background:#0F2C1C}
+.btn-print:active{transform:scale(.98)}
+.btn-new{background:var(--card);color:var(--mid);width:100%;border:1.5px solid var(--border);margin-top:10px}
+.btn-new:hover{background:var(--lite)}
+.btn-sched{background:var(--lite);color:var(--deep);width:100%;border:1.5px solid var(--border);margin-top:10px;font-weight:600}
+.btn-sched:hover{background:var(--border)}
+.btn-danger{background:#FEE2E2;color:var(--danger);width:100%;border:1px solid #FECACA;margin-top:10px}
+.btn-danger:hover{background:#FECACA}
+.nav-row{display:flex;gap:10px;margin-top:24px}
+.nav-row .btn-ghost{flex:0 0 auto;padding:13px 18px}
+.nav-row .btn-primary{flex:1}
+
+/* STEP 4 & HISTORIAL DETAIL */
+.sum-card{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.sum-row{display:flex;justify-content:space-between;align-items:baseline;padding:11px 16px;border-bottom:1px solid var(--border);font-size:14px;gap:12px}
+.sum-row:last-child{border-bottom:none}
+.sum-k{color:var(--ink2);white-space:nowrap}
+.sum-v{font-weight:600;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.sig-preview-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.sig-thumb{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.sig-thumb img{width:100%;height:64px;object-fit:contain;display:block;background:#fff}
+.sig-thumb-lbl{font-size:11px;color:var(--ink2);text-align:center;padding:5px;border-top:1px solid var(--border)}
+.doc-list{margin-bottom:20px}
+.doc-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px}
+.doc-icon{width:36px;height:36px;background:var(--lite);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.doc-info h3{font-size:13px;font-weight:700;color:var(--ink);line-height:1.3}
+.doc-info p{font-size:12px;color:var(--ink2)}
+
+/* SETTINGS BTN */
+.btn-settings{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:auto;flex-shrink:0}
+.btn-settings:hover{background:rgba(255,255,255,.25)}
+
+/* RESPONSABLES */
+.resp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.resp-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;transition:all .15s;text-align:center;-webkit-tap-highlight-color:transparent}
+.resp-card:hover{border-color:var(--mid);background:var(--lite)}
+.resp-card.selected{border-color:var(--mid);background:var(--lite);box-shadow:0 0 0 3px rgba(46,125,82,.2)}
+.resp-card img{width:100%;height:46px;object-fit:contain;display:block;background:#fff;border-radius:6px;margin-bottom:6px;border:1px solid var(--border)}
+.resp-card h4{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resp-card p{font-size:11px;color:var(--ink2);margin-top:1px}
+.resp-card-del{font-size:10px;color:var(--danger);background:none;border:none;cursor:pointer;margin-top:4px;padding:2px 6px}
+.resp-picker-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mid);margin-bottom:8px}
+.resp-empty{font-size:13px;color:var(--ink2);padding:8px 0 12px;text-align:center}
+.resp-divider{font-size:11px;color:var(--ink2);text-align:center;margin:4px 0 12px;opacity:.7}
+.resp-add{background:var(--lite);border:1.5px dashed var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
+.resp-add>p{font-size:13px;color:var(--ink2);margin-bottom:12px}
+
+/* IMPORT MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center}
+.modal.open{display:flex;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--card);border-radius:16px 16px 0 0;padding:24px 20px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto}
+.modal-box h3{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.modal-box>p{font-size:13px;color:var(--ink2);margin-bottom:14px}
+.modal-textarea{width:100%;height:110px;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:monospace;resize:vertical;color:var(--ink);background:var(--card)}
+.modal-textarea:focus{outline:none;border-color:var(--mid)}
+.import-preview{margin:10px 0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;overflow-x:auto;max-height:180px;overflow-y:auto}
+.import-preview table{width:100%;border-collapse:collapse;font-size:12px}
+.import-preview th{background:var(--lite);padding:5px 8px;font-size:11px;font-weight:700;text-align:left;color:var(--ink2);border-bottom:1px solid var(--border)}
+.import-preview td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--ink)}
+.import-preview tr:last-child td{border-bottom:none}
+.modal-actions{display:flex;gap:10px;margin-top:12px}
+.gemini-key-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;background:var(--lite);border-radius:var(--radius);padding:10px 12px;border:1px solid var(--border)}
+.gemini-key-row input{flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:monospace;color:var(--ink);background:var(--card)}
+.gemini-key-row input:focus{outline:none;border-color:var(--mid)}
+.gemini-key-row button{padding:7px 12px;background:var(--mid);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.img-drop{border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:10px;position:relative}
+.img-drop:hover{border-color:var(--mid);background:var(--lite)}
+.img-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-drop p{font-size:14px;color:var(--ink2);margin:0}
+.img-drop .sub{font-size:12px;color:var(--ink2);opacity:.7;margin-top:4px}
+.img-preview{width:100%;max-height:120px;object-fit:contain;border-radius:8px;border:1px solid var(--border);display:none;margin-bottom:10px}
+.tabs-import{display:flex;gap:0;margin-bottom:14px;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tab-btn{flex:1;padding:9px;font-size:12px;font-weight:600;border:none;background:var(--card);color:var(--ink2);cursor:pointer;transition:all .15s}
+.tab-btn.active{background:var(--mid);color:#fff}
+.manual-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;align-items:center}
+.manual-row input{padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);width:100%}
+.manual-row input:focus{outline:none;border-color:var(--mid)}
+.manual-row .del-row{background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:0 4px;opacity:.6}
+.manual-row .del-row:hover{opacity:1}
+.manual-header{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em}
+.manual-header2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1A4731;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:999;transition:transform .3s cubic-bezier(.4,0,.2,1);white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* PRINT */
+@media screen{.print-area{display:none !important}}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{background:#fff !important;color:#000 !important}
+  .app{display:none !important}
+  .print-area{display:block !important}
+  .doc-page{page-break-after:always;padding:14mm 18mm 12mm;font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#000;background:#fff;width:210mm;min-height:297mm}
+  .doc-page:last-child{page-break-after:auto}
+  body>*:not(.print-area){display:none !important}
+  .ph-tbl{width:100%;border-collapse:collapse;margin-bottom:10px}
+  .ph-tbl td{border:1px solid #000;padding:4px 7px;vertical-align:middle}
+  .ph-tbl .logo-c{width:86px;text-align:center;vertical-align:middle;padding:5px}
+  .ph-tbl .logo-c img{max-width:78px;height:auto;display:block;margin:0 auto}
+  .doc2-logo{text-align:right;margin-bottom:10px}
+  .doc2-logo img{height:38px;width:auto}
+  .sig-row-rrhh{display:flex;justify-content:space-around;margin-top:14px;padding-top:12px;border-top:1px solid #000}
+  .ph-tbl .tit-c{text-align:center;font-size:13pt;font-weight:700}
+  .ph-tbl .cod-c{width:105px;text-align:center;font-size:8.5pt}
+  .pf-tbl{width:100%;border-collapse:collapse;margin-bottom:10px}
+  .pf-tbl td{border:1px solid #000;padding:3px 7px;font-size:9.5pt;vertical-align:middle}
+  .pf-tbl .lbl{font-weight:700;white-space:nowrap}
+  .pb{font-size:9.5pt;line-height:1.45;margin-bottom:6px}
+  .pb p{margin-bottom:4px}
+  .pb ul{margin-left:16px}
+  .pb ul li{margin-bottom:1px;font-size:9pt}
+  .sig-row{display:flex;justify-content:space-around;margin-top:20px}
+  .sig-blk{text-align:center;width:43%}
+  .sig-blk img{max-width:150px;height:50px;object-fit:contain;display:block;margin:0 auto 3px}
+  .sig-line{border-top:1px solid #000;padding-top:3px;font-size:9.5pt;line-height:1.55}
+  .doc-tit{text-align:center;font-size:13pt;font-weight:700;margin-bottom:32px;line-height:1.4}
+  .doc-body{font-size:10pt;line-height:2.3;text-align:justify;margin-bottom:30px}
+  .doc-body u{display:inline-block;min-width:100px}
+  .fecha-line{margin-bottom:44px;font-size:10pt}
+  .fecha-line u{display:inline-block;min-width:150px}
+  .center-sig{text-align:center;margin:0 auto;width:55%}
+  .center-sig img{max-width:180px;height:58px;object-fit:contain;display:block;margin:0 auto 8px}
+  .center-sig-line{border-top:1px solid #000;padding-top:5px;font-size:10.5pt;font-weight:700}
+  .doc-footer{text-align:center;margin-top:60px;font-size:8.5pt;border-top:1px dashed #000;padding-top:8px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <div class="app-header-row">
+      <div class="app-logo">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M11 2L4 6V16L11 20L18 16V6L11 2Z" fill="#1A4731"/>
+          <path d="M8 11.2L10.2 13.4L14.5 9" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="app-title">
+        <h1>Inducción EHS</h1>
+        <p>Plantaciones de Blasa Plantabal S.A.</p>
+      </div>
+      <button class="btn-settings" onclick="goTo(6)" title="Responsables EHS">⚙️</button>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+    <div class="sync-bar" id="syncBar"></div>
+  </header>
+
+  <!-- STEP 0: HOME -->
+  <div class="step active" id="step0">
+    <div class="home-hero">
+      <div class="home-hero-icon">🛡️</div>
+      <h2>Registro de Inducciones</h2>
+      <p>Firma digital de los 3 documentos EHS</p>
+    </div>
+
+    <div id="schedSection">
+      <div class="section-label" id="schedLabel">
+        Programadas <span class="section-badge" id="schedCount">0</span>
+      </div>
+      <div id="schedContainer"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="toStep(1)">+ Nueva inducción</button>
+    <button class="btn btn-sched" style="margin-top:10px" onclick="openImport()">📋 Importar lista de trabajadores</button>
+
+    <hr class="divider" style="margin:20px 0">
+
+    <div id="histSection">
+      <div class="section-label">
+        Historial de inducciones <span class="section-badge" id="histCount">0</span>
+      </div>
+      <div id="histContainer"></div>
+    </div>
+  </div>
+
+  <!-- STEP 1: DATOS -->
+  <div class="step" id="step1">
+    <div class="eyebrow">Paso 1 de 4</div>
+    <h2 class="step-title">Datos del trabajador</h2>
+    <p class="step-desc">Ingresa la información de quien recibe la inducción</p>
+
+    <div class="field">
+      <span class="field-label">Tipo de proceso</span>
+      <div class="tipo-group">
+        <div class="tipo-opt">
+          <input type="radio" name="tipo" id="rInd" value="induccion" checked>
+          <label for="rInd"><span class="dot"></span>Inducción</label>
+        </div>
+        <div class="tipo-opt">
+          <input type="radio" name="tipo" id="rRei" value="reinduccion">
+          <label for="rRei"><span class="dot"></span>Reinducción</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="fNombre">Nombre completo *</label>
+      <input class="field-input" type="text" id="fNombre" placeholder="Apellidos y nombres" autocomplete="name">
+    </div>
+    <div class="field">
+      <label class="field-label" for="fCedula">Cédula de identidad *</label>
+      <input class="field-input" type="text" id="fCedula" placeholder="0102345678" inputmode="numeric" autocomplete="off">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="fCargo">Cargo *</label>
+        <input class="field-input" type="text" id="fCargo" placeholder="Ej: Operador">
+      </div>
+      <div class="field">
+        <label class="field-label" for="fArea">Área / Sección *</label>
+        <input class="field-input" type="text" id="fArea" placeholder="Ej: Producción">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="fFecha">Fecha *</label>
+      <input class="field-input" type="date" id="fFecha">
+    </div>
+    <hr class="divider">
+    <div class="field" id="fEncSelectField" style="display:none">
+      <span class="field-label">Técnico EHS</span>
+      <select class="field-input" id="fEncSelect" onchange="onEncSelectChange(this.value)">
+        <option value="">— Seleccionar técnico —</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label" for="fEnc">Encargado de la inducción (EHS)</label>
+      <input class="field-input" type="text" id="fEnc" placeholder="Nombre del responsable EHS">
+    </div>
+    <div class="field">
+      <label class="field-label" for="fCEHS">Cédula del responsable EHS</label>
+      <input class="field-input" type="text" id="fCEHS" placeholder="Cédula EHS" inputmode="numeric">
+    </div>
+
+    <button class="btn btn-primary" onclick="toStep(2)">Continuar a firmar →</button>
+    <button class="btn btn-sched" onclick="programar()">📅 Programar para después</button>
+    <div class="nav-row" style="margin-top:12px">
+      <button class="btn btn-ghost" style="width:100%" onclick="toStep(0)">← Volver al inicio</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: FIRMA TRABAJADOR -->
+  <div class="step" id="step2">
+    <div class="eyebrow">Paso 2 de 4</div>
+    <h2 class="step-title">Firma del colaborador</h2>
+    <p class="step-desc">El trabajador dibuja su firma con el dedo</p>
+    <div class="info-card">
+      <div class="info-card-label">Colaborador</div>
+      <div class="info-card-body" id="wInfo">—</div>
+    </div>
+    <div class="sig-wrapper">
+      <div class="sig-canvas-area">
+        <canvas id="cvW" height="220"></canvas>
+        <div class="sig-hint" id="hW">✍ Firma aquí con el dedo</div>
+      </div>
+      <div class="sig-bar">
+        <span class="sig-bar-label">Firma del trabajador</span>
+        <button class="btn btn-del" onclick="clearSig('cvW','hW')">Borrar</button>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="toStep(1)">← Atrás</button>
+      <button class="btn btn-primary" onclick="toStep(3)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: FIRMA EHS -->
+  <div class="step" id="step3">
+    <div class="eyebrow">Paso 3 de 4</div>
+    <h2 class="step-title">Firma del responsable EHS</h2>
+    <p class="step-desc">El encargado EHS certifica la inducción</p>
+    <div class="info-card">
+      <div class="info-card-label">Responsable EHS</div>
+      <div class="info-card-body" id="eInfo">—</div>
+    </div>
+
+    <div id="respPickerSection"></div>
+
+    <div class="sig-wrapper" id="sigWrapperEHS">
+      <div class="sig-canvas-area">
+        <canvas id="cvE" height="220"></canvas>
+        <div class="sig-hint" id="hE">✍ Firma aquí con el dedo</div>
+      </div>
+      <div class="sig-bar">
+        <span class="sig-bar-label">Firma del responsable EHS</span>
+        <button class="btn btn-del" onclick="clearSig('cvE','hE')">Borrar</button>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="toStep(2)">← Atrás</button>
+      <button class="btn btn-primary" onclick="toStep(4)">Ver documentos →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: EXPORTAR -->
+  <div class="step" id="step4">
+    <div class="eyebrow">Paso 4 de 4</div>
+    <h2 class="step-title">Documentos listos</h2>
+    <p class="step-desc">Revisa y exporta los 3 documentos en PDF</p>
+    <div class="sum-card">
+      <div class="sum-row"><span class="sum-k">Colaborador</span><span class="sum-v" id="sNombre">—</span></div>
+      <div class="sum-row"><span class="sum-k">Cédula</span><span class="sum-v" id="sCedula">—</span></div>
+      <div class="sum-row"><span class="sum-k">Cargo</span><span class="sum-v" id="sCargo">—</span></div>
+      <div class="sum-row"><span class="sum-k">Área</span><span class="sum-v" id="sArea">—</span></div>
+      <div class="sum-row"><span class="sum-k">Fecha</span><span class="sum-v" id="sFecha">—</span></div>
+      <div class="sum-row"><span class="sum-k">Tipo</span><span class="sum-v" id="sTipo">—</span></div>
+    </div>
+    <div class="sig-preview-row">
+      <div class="sig-thumb"><img id="tW" src="" alt=""><div class="sig-thumb-lbl">Colaborador</div></div>
+      <div class="sig-thumb"><img id="tE" src="" alt=""><div class="sig-thumb-lbl">Responsable EHS</div></div>
+    </div>
+    <div class="doc-list">
+      <div class="doc-item"><div class="doc-icon">📋</div><div class="doc-info"><h3>Registro de Inducción EHS</h3><p>GE-SO-R25 · Versión 01</p></div></div>
+      <div class="doc-item"><div class="doc-icon">📝</div><div class="doc-info"><h3>Acta de Compromiso y Responsabilidad</h3><p>Laboral</p></div></div>
+      <div class="doc-item"><div class="doc-icon">✅</div><div class="doc-info"><h3>Acta de Compromiso</h3><p>Reglamento de Higiene y Seguridad</p></div></div>
+    </div>
+    <button class="btn btn-print" onclick="exportar()">🖨 Imprimir / Guardar PDF</button>
+    <button class="btn btn-new" onclick="irAInicio()">← Volver al inicio</button>
+  </div>
+
+  <!-- STEP 5: DETALLE HISTORIAL -->
+  <div class="step" id="step5">
+    <div class="eyebrow">Historial</div>
+    <h2 class="step-title" id="h5Nombre">—</h2>
+    <p class="step-desc" id="h5Desc">—</p>
+
+    <div class="sum-card">
+      <div class="sum-row"><span class="sum-k">Colaborador</span><span class="sum-v" id="h5sNombre">—</span></div>
+      <div class="sum-row"><span class="sum-k">Cédula</span><span class="sum-v" id="h5sCedula">—</span></div>
+      <div class="sum-row"><span class="sum-k">Cargo</span><span class="sum-v" id="h5sCargo">—</span></div>
+      <div class="sum-row"><span class="sum-k">Área</span><span class="sum-v" id="h5sArea">—</span></div>
+      <div class="sum-row"><span class="sum-k">Fecha</span><span class="sum-v" id="h5sFecha">—</span></div>
+      <div class="sum-row"><span class="sum-k">Tipo</span><span class="sum-v" id="h5sTipo">—</span></div>
+      <div class="sum-row"><span class="sum-k">Responsable EHS</span><span class="sum-v" id="h5sEnc">—</span></div>
+    </div>
+
+    <div class="sig-preview-row">
+      <div class="sig-thumb"><img id="h5sigW" src="" alt=""><div class="sig-thumb-lbl">Colaborador</div></div>
+      <div class="sig-thumb"><img id="h5sigE" src="" alt=""><div class="sig-thumb-lbl">Responsable EHS</div></div>
+    </div>
+
+    <button class="btn btn-print" onclick="reimprimirDesdeHistorial()">🖨 Reimprimir documentos</button>
+    <button class="btn btn-danger" onclick="eliminarDelHistorial()">🗑 Eliminar este registro</button>
+    <button class="btn btn-new" onclick="toStep(0)">← Volver al historial</button>
+  </div>
+
+  <!-- STEP 6: RESPONSABLES EHS -->
+  <div class="step" id="step6">
+    <div class="eyebrow">Configuración</div>
+    <h2 class="step-title">Responsables EHS</h2>
+    <p class="step-desc">Registra hasta 4 encargados EHS con su firma para usarla rápidamente en cada inducción</p>
+
+    <div id="respListSection"></div>
+
+    <div id="respFormSection" class="resp-add">
+      <p>Registrar nuevo responsable</p>
+      <div class="field" style="text-align:left">
+        <label class="field-label" for="rNombre">Nombre completo</label>
+        <input class="field-input" type="text" id="rNombre" placeholder="Nombre del responsable EHS">
+      </div>
+      <div class="field" style="text-align:left">
+        <label class="field-label" for="rCedula">Cédula</label>
+        <input class="field-input" type="text" id="rCedula" placeholder="Cédula" inputmode="numeric">
+      </div>
+      <div class="field" style="text-align:left">
+        <label class="field-label">Firma</label>
+        <div class="sig-wrapper">
+          <div class="sig-canvas-area">
+            <canvas id="cvR" height="180"></canvas>
+            <div class="sig-hint" id="hR">✍ Dibuja la firma aquí</div>
+          </div>
+          <div class="sig-bar">
+            <span class="sig-bar-label">Firma del responsable</span>
+            <button class="btn btn-del" onclick="clearSig('cvR','hR')">Borrar</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="guardarResponsable()" style="margin-top:8px">💾 Guardar responsable</button>
+    </div>
+
+    <button class="btn btn-ghost" style="width:100%;margin-top:14px" onclick="goTo(0)">← Volver al inicio</button>
+  </div>
+
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<!-- IMPORT MODAL -->
+<div class="modal" id="importModal">
+  <div class="modal-box">
+    <h3>📋 Importar lista de trabajadores</h3>
+    <p>Copia la tabla del correo de RRHH y pégala aquí. Columnas esperadas en orden:<br>
+    <span style="font-size:12px;font-weight:700;color:var(--mid)">Nombre · Cédula · Fecha ingreso · Cargo · Área</span></p>
+    <textarea class="modal-textarea" id="importText" placeholder="Pega aquí la tabla copiada del correo o Excel..." oninput="parseImportPreview()"></textarea>
+    <div id="importPreview"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="flex:0 0 auto;padding:12px 16px" onclick="closeImport()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="confirmImport()">✅ Programar todos</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT AREA -->
+<div class="print-area">
+  <!-- DOC 1 -->
+  <div class="doc-page">
+    <table class="ph-tbl">
+      <tr>
+        <td class="logo-c" rowspan="2"><img class="logo-print" src="" alt="3A Core Materials Composites"></td>
+        <td class="tit-c" rowspan="2">REGISTRO DE INDUCCIÓN EHS</td>
+        <td class="cod-c">GE-SO-R25</td>
+      </tr>
+      <tr><td class="cod-c">Versión: 01</td></tr>
+    </table>
+    <table class="pf-tbl">
+      <tr>
+        <td class="lbl">FECHA:</td>
+        <td id="p1F"></td>
+        <td style="border-left:2px solid #000;font-size:9pt;"><b>INDUCCIÓN</b> <span id="p1cI"></span>&nbsp;&nbsp;&nbsp;<b>REINDUCCIÓN</b> <span id="p1cR"></span></td>
+      </tr>
+      <tr><td class="lbl">NOMBRE:</td><td id="p1N" colspan="2"></td></tr>
+      <tr>
+        <td class="lbl">ÁREA/SECCIÓN:</td>
+        <td id="p1A"></td>
+        <td style="border-left:2px solid #000;font-size:9pt;"><b>CARGO:</b> <span id="p1Ca"></span>&nbsp;&nbsp;<b>CÉDULA:</b> <span id="p1Ce" style="font-family:monospace;"></span></td>
+      </tr>
+      <tr><td class="lbl">ENCARGADO DE LA INDUCCIÓN:</td><td id="p1E" colspan="2"></td></tr>
+    </table>
+    <div class="pb">
+      <p><b>OBJETIVO GENERAL</b></p>
+      <p>Con el propósito de dar a conocer al personal que ingresa a nuestra compañía las políticas, procedimientos y normas de seguridad y salud en el trabajo y ambiente establecidas y así promover y preservar la salud de los trabajadores, en la inducción al nuevo trabajador se le dan los siguientes temas:</p>
+      <p><b>Temáticas:</b></p>
+      <ul>
+        <li>Importancia de EHS.</li><li>Política de seguridad.</li><li>Normativa de seguridad, salud y ambiente.</li>
+        <li>Riesgos y peligros puntos importantes a seguir.</li>
+        <li>Definición de accidente, incidente, enfermedades profesionales (notificación del evento inmediatamente) y accidentes in itinere.</li>
+        <li>Clasificación de factores de riesgos y sus medidas de prevención.</li>
+        <li>Equipos de protección personal – orden y limpieza.</li><li>Actos y condiciones inseguras.</li>
+        <li>Señalizaciones de seguridad (preventivas, prohibitivas, obligatorias, informativas).</li>
+        <li>Tipos de emergencias de la empresa.</li>
+        <li>Plan de emergencias y contingencias que hacer antes, durante y después.</li>
+        <li>Uso de extintores en cada tipo de fuego – clases de fuego.</li><li>Plan de manejo ambiental.</li>
+        <li>Gestión adecuada de desechos peligrosos y no peligrosos efectos de contaminación ambiental agua, suelo, aire y ecosistemas.</li>
+        <li>Tipos de desechos peligros y no peligrosos, almacenamiento y disposición correcta de desechos.</li>
+        <li>Cultura preventiva y ambientalista</li><li>Procedimientos para tareas de alto riesgo.</li>
+      </ul>
+      <p style="margin-top:6px;text-align:justify;">Yo como trabajador de la empresa estoy comprometido con las normas y procedimientos de seguridad dados por la empresa para el desarrollo seguro de mi labor. Declaro que conozco el reglamento de Higiene y Seguridad Industrial, así mismo los estándares, procedimientos generales de Seguridad y Salud en el Trabajo y ambiente de la empresa <b>Plantaciones de Balsa Plantabal S.A,</b> me comprometo a cumplirlas e informar de inmediato cualquier condición que considere afecte mi salud y condiciones de trabajo.</p>
+    </div>
+    <div class="sig-row">
+      <div class="sig-blk"><img id="p1sW" src="" alt=""><div class="sig-line"><b>Firma del Trabajador</b><br>C.C. <span id="p1ccW" style="font-family:monospace;"></span></div></div>
+      <div class="sig-blk"><img id="p1sE" src="" alt=""><div class="sig-line"><b>Responsable del EHS</b><br>C.C. <span id="p1ccE" style="font-family:monospace;"></span></div></div>
+    </div>
+  </div>
+
+  <!-- DOC 2 -->
+  <div class="doc-page">
+    <h2 class="doc-tit">ACTA DE COMPROMISO Y RESPONSABILIDAD<br>LABORAL</h2>
+    <p class="doc-body">Yo <u id="p2N">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>, portador de cedula de identidad <u id="p2Ce" style="font-family:monospace;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> con el cargo <u id="p2Ca">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> me comprometo a cumplir mis labores de manera responsable y segura realizando las actividades que me corresponden como y/o me asignen en el área <u id="p2A">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> por lo tanto me queda <b>prohibido manipular u operar</b> cualquier tipo de maquina o equipo para la cual no estoy contratado, entrenado ni capacitado para realizar dichas labores. De acuerdo a esta disposición, acepto haber recibido la inducción de Seguridad Salud Y Ambiente en la cual se me indica que debo cumplir los lineamientos establecidos en el Reglamento de Higiene y Seguridad en el trabajo.</p>
+    <div class="sig-row">
+      <div class="sig-blk"><img id="p2sE" src="" alt=""><div class="sig-line"><b>Firma EHS</b><br>Nombre: <span id="p2Enc"></span><br>Cargo: Técnico Seguridad y Ambiente</div></div>
+      <div class="sig-blk"><img id="p2sW" src="" alt=""><div class="sig-line"><b>Firma del colaborador</b><br>Nombre: <span id="p2NW"></span><br>Cargo: <span id="p2CaW"></span></div></div>
+    </div>
+  </div>
+
+  <!-- DOC 3 -->
+  <div class="doc-page">
+    <h2 class="doc-tit">ACTA DE COMPROMISO</h2>
+    <p class="doc-body">Yo <u id="p3N">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>, con cédula de identidad <u id="p3Ce" style="font-family:monospace;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> declaro haber recibido la inducción de seguridad, salud y ambiente junto con copia del reglamento interno de higiene y seguridad en el trabajo de <b><u>PLANTACIONES DE BLASA PLANTABAL S.A.</u></b></p>
+    <p style="font-size:10pt;line-height:1.7;text-align:justify;margin-bottom:44pt;">Aseguro entender su contenido y me comprometo a cumplir las directrices del presente reglamento durante mi relación laboral en la empresa.</p>
+    <p class="fecha-line">Fecha: <u id="p3Fe">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u></p>
+    <div class="center-sig">
+      <img id="p3sW" src="" alt="">
+      <div class="center-sig-line">Firma del colaborador</div>
+    </div>
+    <div class="doc-footer">Desprende la hoja y entregar copia a RRHH PARA su archivo en el file Personal</div>
+  </div>
+</div>
+
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+'use strict';
+
+/* ─── FIREBASE CONFIG ─── */
+const firebaseConfig = {
+  apiKey: "AIzaSyDV9PgdFkevrg0N1S0pGBbaPYvs082PMyc",
+  authDomain: "plantabal-inducciones-ehs.firebaseapp.com",
+  projectId: "plantabal-inducciones-ehs",
+  storageBucket: "plantabal-inducciones-ehs.firebasestorage.app",
+  messagingSenderId: "832227264831",
+  appId: "1:832227264831:web:c7633f585caa6b230b2b8a"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ─── CACHE LOCAL (actualizado por onSnapshot) ─── */
+let _programadas = [];
+let _historial   = [];
+
+/* ─── SYNC BAR ─── */
+function syncBar(state) {
+  const b = document.getElementById('syncBar');
+  b.className = 'sync-bar ' + state;
+  if (state === 'ok') setTimeout(() => b.className = 'sync-bar', 2000);
+}
+
+/* ─── LISTENERS EN TIEMPO REAL ─── */
+db.collection('programadas')
+  .orderBy('createdAt', 'asc')
+  .onSnapshot(snap => {
+    _programadas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderScheduled();
+    syncBar('ok');
+  }, () => syncBar('err'));
+
+db.collection('historial')
+  .orderBy('completedAt', 'desc')
+  .limit(100)
+  .onSnapshot(snap => {
+    _historial = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderHistorial();
+  }, () => {});
+
+/* ─── CRUD FIRESTORE ─── */
+async function fbAddScheduled(d) {
+  syncBar('syncing');
+  await db.collection('programadas').add({
+    nombre: d.nombre, cedula: d.cedula, cargo: d.cargo,
+    area: d.area, fecha: d.fecha, tipo: d.tipo,
+    encargado: d.encargado, cedulaEHS: d.cedulaEHS,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+async function fbDelScheduled(id) {
+  await db.collection('programadas').doc(id).delete();
+}
+
+async function fbAddHistorial(d) {
+  syncBar('syncing');
+  const [sigW, sigE] = await Promise.all([toJpeg(d.sigW), toJpeg(d.sigE)]);
+  await db.collection('historial').add({
+    nombre: d.nombre, cedula: d.cedula, cargo: d.cargo,
+    area: d.area, fecha: d.fecha, tipo: d.tipo,
+    encargado: d.encargado, cedulaEHS: d.cedulaEHS,
+    sigW, sigE,
+    completedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  syncBar('ok');
+}
+
+async function fbDelHistorial(id) {
+  syncBar('syncing');
+  await db.collection('historial').doc(id).delete();
+  syncBar('ok');
+}
+
+/* ─── STATE ─── */
+const st = {
+  nombre:'', cedula:'', cargo:'', area:'', fecha:'',
+  tipo:'induccion', encargado:'', cedulaEHS:'',
+  sigW:null, sigE:null, schedId:null
+};
+const cvReg = {};
+let historialViewId = null;
+
+/* ─── BOOT ─── */
+document.getElementById('fFecha').value = new Date().toISOString().split('T')[0];
+
+/* ─── TOAST ─── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ─── RENDER PROGRAMADAS ─── */
+function renderScheduled() {
+  const arr = _programadas;
+  document.getElementById('schedCount').textContent = arr.length;
+  const container = document.getElementById('schedContainer');
+  if (arr.length === 0) {
+    container.innerHTML = '<div class="sched-empty"><p>No hay inducciones programadas</p></div>';
+    return;
+  }
+  container.innerHTML = arr.map(item => `
+    <div class="sched-item" onclick="loadScheduled('${item.id}')">
+      <div class="sched-badge">👤</div>
+      <div class="sched-info">
+        <h3>${x(item.nombre)}</h3>
+        <p>${x(item.cargo)} — ${x(item.area)}</p>
+      </div>
+      <span class="sched-date">${fmtDate(item.fecha)}</span>
+      <button class="sched-del" onclick="event.stopPropagation();borrarProg('${item.id}')" title="Eliminar">✕</button>
+    </div>
+  `).join('');
+}
+
+/* ─── RENDER HISTORIAL ─── */
+function renderHistorial() {
+  const arr = _historial;
+  document.getElementById('histCount').textContent = arr.length;
+  const container = document.getElementById('histContainer');
+  if (arr.length === 0) {
+    container.innerHTML = '<div class="sched-empty"><p>Aún no hay inducciones completadas</p></div>';
+    return;
+  }
+  container.innerHTML = arr.map(item => `
+    <div class="hist-item" onclick="verHistorial('${item.id}')">
+      <div class="hist-badge">✅</div>
+      <div class="hist-info">
+        <h3>${x(item.nombre)}</h3>
+        <p>${x(item.cedula)} · ${x(item.cargo)}</p>
+      </div>
+      <div class="hist-meta">
+        <span class="hist-date">${fmtDate(item.fecha)}</span>
+        <span class="hist-tipo">${item.tipo === 'induccion' ? 'Inducción' : 'Reinducción'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ─── PROGRAMAR ─── */
+async function programar() {
+  if (!v1()) return;
+  save1();
+  showToast('⏳ Guardando...');
+  try {
+    await fbAddScheduled({...st});
+    goTo(0);
+    showToast('✅ Inducción programada — visible en todos los dispositivos');
+  } catch(e) {
+    showToast('⚠️ Error al guardar. Verifica tu conexión.');
+  }
+}
+
+function loadScheduled(id) {
+  const item = _programadas.find(x => x.id === id);
+  if (!item) return;
+  Object.assign(st, item);
+  st.schedId = id;
+  document.getElementById('fNombre').value = item.nombre;
+  document.getElementById('fCedula').value = item.cedula;
+  document.getElementById('fCargo').value  = item.cargo;
+  document.getElementById('fArea').value   = item.area;
+  document.getElementById('fFecha').value  = item.fecha;
+  document.getElementById('fEnc').value    = item.encargado;
+  document.getElementById('fCEHS').value   = item.cedulaEHS;
+  document.getElementById(item.tipo === 'reinduccion' ? 'rRei' : 'rInd').checked = true;
+  goTo(2);
+  document.getElementById('wInfo').innerHTML =
+    '<b>'+x(item.nombre)+'</b> · C.C. '+x(item.cedula)+'<br>'+x(item.cargo)+' — '+x(item.area);
+  requestAnimationFrame(() => setupCv('cvW','hW'));
+}
+
+async function borrarProg(id) {
+  try {
+    await fbDelScheduled(id);
+    showToast('Programación eliminada');
+  } catch(e) {
+    showToast('⚠️ Error al eliminar');
+  }
+}
+
+/* ─── VER HISTORIAL ─── */
+function verHistorial(id) {
+  const item = _historial.find(r => r.id === id);
+  if (!item) return;
+  historialViewId = id;
+  document.getElementById('h5Nombre').textContent = item.nombre;
+  document.getElementById('h5Desc').textContent   = fmtDate(item.fecha) + ' — ' + (item.tipo==='induccion'?'Inducción':'Reinducción');
+  document.getElementById('h5sNombre').textContent = item.nombre;
+  document.getElementById('h5sCedula').textContent = item.cedula;
+  document.getElementById('h5sCargo').textContent  = item.cargo;
+  document.getElementById('h5sArea').textContent   = item.area;
+  document.getElementById('h5sFecha').textContent  = fmtDate(item.fecha);
+  document.getElementById('h5sTipo').textContent   = item.tipo==='induccion'?'Inducción':'Reinducción';
+  document.getElementById('h5sEnc').textContent    = item.encargado || '—';
+  document.getElementById('h5sigW').src = item.sigW || '';
+  document.getElementById('h5sigE').src = item.sigE || '';
+  goTo(5);
+}
+
+function reimprimirDesdeHistorial() {
+  const item = _historial.find(r => r.id === historialViewId);
+  if (!item) return;
+  fillPrintFrom(item);
+  setTimeout(() => window.print(), 80);
+}
+
+async function eliminarDelHistorial() {
+  if (!confirm('¿Eliminar este registro del historial?')) return;
+  try {
+    await fbDelHistorial(historialViewId);
+    historialViewId = null;
+    goTo(0);
+    showToast('🗑 Registro eliminado');
+  } catch(e) {
+    showToast('⚠️ Error al eliminar');
+  }
+}
+
+/* ─── EXPORTAR ─── */
+function exportar() {
+  fillPrintFrom(st);
+  // Guardar en Firebase (fire-and-forget para no bloquear el PDF)
+  fbAddHistorial({...st}).catch(() => showToast('⚠️ No se pudo guardar en historial'));
+  // Si era programada, eliminarla
+  if (st.schedId) {
+    fbDelScheduled(st.schedId).catch(() => {});
+    st.schedId = null;
+  }
+  setTimeout(() => window.print(), 80);
+}
+
+/* ─── PROGRESS ─── */
+function setProg(n){ document.getElementById('progFill').style.width=([0,25,50,75,100,0,0][n]||0)+'%'; }
+
+/* ─── CANVAS ─── */
+function setupCv(id, hintId) {
+  const canvas = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.parentElement.getBoundingClientRect().width || 400;
+  canvas.width = Math.floor(w*dpr); canvas.height = Math.floor(220*dpr);
+  canvas.style.height = '220px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.strokeStyle='#111'; ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round';
+  let drawing = false;
+  function pt(e){ const r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return{x:s.clientX-r.left,y:s.clientY-r.top}; }
+  function hide(){ const h=document.getElementById(hintId); if(h) h.style.opacity='0'; }
+  canvas.addEventListener('mousedown',  e=>{drawing=true;const p=pt(e);ctx.beginPath();ctx.moveTo(p.x,p.y);hide()});
+  canvas.addEventListener('mousemove',  e=>{if(!drawing)return;const p=pt(e);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y)});
+  canvas.addEventListener('mouseup',    ()=>{drawing=false;ctx.beginPath()});
+  canvas.addEventListener('mouseleave', ()=>{drawing=false;ctx.beginPath()});
+  canvas.addEventListener('touchstart', e=>{e.preventDefault();drawing=true;const p=pt(e);ctx.beginPath();ctx.moveTo(p.x,p.y);hide()},{passive:false});
+  canvas.addEventListener('touchmove',  e=>{e.preventDefault();if(!drawing)return;const p=pt(e);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y)},{passive:false});
+  canvas.addEventListener('touchend',   e=>{e.preventDefault();drawing=false;ctx.beginPath()},{passive:false});
+  cvReg[id]={canvas,ctx};
+}
+
+function clearSig(id,hintId){
+  const{canvas,ctx}=cvReg[id];const dpr=window.devicePixelRatio||1;
+  ctx.clearRect(0,0,canvas.width/dpr,canvas.height/dpr);
+  const h=document.getElementById(hintId);if(h) h.style.opacity='1';
+}
+function isEmpty(id){ return !cvReg[id].canvas.getContext('2d').getImageData(0,0,cvReg[id].canvas.width,cvReg[id].canvas.height).data.some(v=>v!==0); }
+function getURL(id){ return cvReg[id].canvas.toDataURL('image/png'); }
+
+function toJpeg(dataURL) {
+  return new Promise(resolve => {
+    if (!dataURL) { resolve(''); return; }
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth || 400;
+          c.height = img.naturalHeight || 220;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0);
+          resolve(c.toDataURL('image/jpeg', 0.65));
+        } catch(e) { resolve(dataURL); }
+      };
+      img.onerror = () => resolve(dataURL);
+      img.src = dataURL;
+    } catch(e) { resolve(dataURL); }
+  });
+}
+
+/* ─── NAVEGACIÓN ─── */
+function currStep(){ for(let i=0;i<=5;i++) if(document.getElementById('step'+i).classList.contains('active')) return i; return 0; }
+
+function goTo(n) {
+  const c = currStep();
+  document.getElementById('step'+c).classList.remove('active');
+  document.getElementById('step'+n).classList.add('active');
+  setProg(n);
+  window.scrollTo({top:0,behavior:'smooth'});
+  if (n===6) requestAnimationFrame(()=>setupCv('cvR','hR'));
+}
+
+function toStep(n) {
+  const c = currStep();
+  if (n > c && n <= 4) {
+    if (c===1 && !v1()) return;
+    if (c===2 && !v2()) return;
+    if (c===3 && !v3()) return;
+  }
+  document.getElementById('step'+c).classList.remove('active');
+  document.getElementById('step'+n).classList.add('active');
+  setProg(n);
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  if (n===2) {
+    save1();
+    document.getElementById('wInfo').innerHTML = '<b>'+x(st.nombre)+'</b> · C.C. '+x(st.cedula)+'<br>'+x(st.cargo)+' — '+x(st.area);
+    requestAnimationFrame(()=>setupCv('cvW','hW'));
+  }
+  if (n===3) {
+    renderRespPicker();
+    if (_selectedRespId) {
+      const r = _responsables.find(r=>r.id===_selectedRespId);
+      if (r) document.getElementById('eInfo').innerHTML = '<b>'+x(r.nombre)+'</b><br>C.C. '+x(r.cedula);
+    } else {
+      document.getElementById('eInfo').innerHTML = '<b>'+x(st.encargado||'Selecciona un técnico')+'</b>';
+      requestAnimationFrame(()=>setupCv('cvE','hE'));
+    }
+  }
+  if (n===4) {
+    st.sigW=getURL('cvW');
+    if (!_selectedRespId) st.sigE=getURL('cvE');
+    fillSummary();
+  }
+  if (n===6) {
+    requestAnimationFrame(()=>setupCv('cvR','hR'));
+  }
+}
+
+/* ─── VALIDACIONES ─── */
+function v1(){
+  for(const id of ['fNombre','fCedula','fCargo','fArea','fFecha']){
+    if(!document.getElementById(id).value.trim()){
+      alert('Completa todos los campos obligatorios (*)');
+      document.getElementById(id).focus(); return false;
+    }
+  }
+  return true;
+}
+function v2(){ if(isEmpty('cvW')){ alert('El colaborador debe firmar.'); return false; } return true; }
+function v3(){ if(_selectedRespId) return true; if(isEmpty('cvE')){ alert('El responsable EHS debe firmar o seleccionar un responsable guardado.'); return false; } return true; }
+
+function save1(){
+  st.nombre   =document.getElementById('fNombre').value.trim();
+  st.cedula   =document.getElementById('fCedula').value.trim();
+  st.cargo    =document.getElementById('fCargo').value.trim();
+  st.area     =document.getElementById('fArea').value.trim();
+  st.fecha    =document.getElementById('fFecha').value;
+  st.encargado=document.getElementById('fEnc').value.trim();
+  st.cedulaEHS=document.getElementById('fCEHS').value.trim();
+  st.tipo     =document.querySelector('input[name="tipo"]:checked').value;
+}
+
+/* ─── SUMMARY ─── */
+function fillSummary(){
+  document.getElementById('sNombre').textContent=st.nombre;
+  document.getElementById('sCedula').textContent=st.cedula;
+  document.getElementById('sCargo').textContent =st.cargo;
+  document.getElementById('sArea').textContent  =st.area;
+  document.getElementById('sFecha').textContent =fmtDate(st.fecha);
+  document.getElementById('sTipo').textContent  =st.tipo==='induccion'?'Inducción':'Reinducción';
+  document.getElementById('tW').src=st.sigW;
+  document.getElementById('tE').src=st.sigE;
+}
+
+/* ─── FILL PRINT ─── */
+function fillPrintFrom(d){
+  const fd=fmtDate(d.fecha);
+  document.getElementById('p1F').textContent  =fd;
+  document.getElementById('p1N').textContent  =d.nombre;
+  document.getElementById('p1A').textContent  =d.area;
+  document.getElementById('p1Ca').textContent =d.cargo;
+  document.getElementById('p1Ce').textContent =d.cedula;
+  document.getElementById('p1E').textContent  =d.encargado;
+  document.getElementById('p1cI').textContent =d.tipo==='induccion'  ?'☑':'☐';
+  document.getElementById('p1cR').textContent =d.tipo==='reinduccion'?'☑':'☐';
+  document.getElementById('p1sW').src=d.sigW; document.getElementById('p1sE').src=d.sigE;
+  document.getElementById('p1ccW').textContent=d.cedula;
+  document.getElementById('p1ccE').textContent=d.cedulaEHS;
+  document.getElementById('p2N').textContent  =d.nombre;
+  document.getElementById('p2Ce').textContent =d.cedula;
+  document.getElementById('p2Ca').textContent =d.cargo;
+  document.getElementById('p2A').textContent  =d.area;
+  document.getElementById('p2sE').src=d.sigE;
+  document.getElementById('p2Enc').textContent=d.encargado;
+  document.getElementById('p2sW').src=d.sigW;
+  document.getElementById('p2NW').textContent =d.nombre;
+  document.getElementById('p2CaW').textContent=d.cargo;
+  document.getElementById('p3N').textContent  =d.nombre;
+  document.getElementById('p3Ce').textContent =d.cedula;
+  document.getElementById('p3Fe').textContent =fd;
+  document.getElementById('p3sW').src=d.sigW;
+}
+
+/* ─── INICIO ─── */
+function irAInicio(){
+  _selectedRespId = null;
+  Object.assign(st,{nombre:'',cedula:'',cargo:'',area:'',fecha:'',tipo:'induccion',encargado:'',cedulaEHS:'',sigW:null,sigE:null,schedId:null});
+  ['fNombre','fCedula','fCargo','fArea','fEnc','fCEHS'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fFecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('rInd').checked=true;
+  const sel=document.getElementById('fEncSelect'); if(sel) sel.value='';
+  goTo(0);
+}
+
+/* ─── UTILS ─── */
+function fmtDate(d){ if(!d) return '—'; const[y,m,dd]=d.split('-'); return dd+'/'+m+'/'+y; }
+function x(s){ return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ─── RESPONSABLES EHS ─── */
+let _responsables = [];
+let _selectedRespId = null;
+
+db.collection('responsables').onSnapshot(snap => {
+  _responsables = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderRespPicker();
+  renderRespList();
+}, () => {});
+
+function renderRespPicker() {
+  // Step 1 dropdown
+  const sel1 = document.getElementById('fEncSelect');
+  const selField = document.getElementById('fEncSelectField');
+  if (sel1 && selField) {
+    if (_responsables.length > 0) {
+      selField.style.display = '';
+      sel1.innerHTML = '<option value="">— Seleccionar técnico —</option>' +
+        _responsables.map(r=>`<option value="${r.id}"${_selectedRespId===r.id?' selected':''}>${x(r.nombre)}</option>`).join('');
+    } else {
+      selField.style.display = 'none';
+    }
+  }
+  // Step 3 picker section
+  const sec = document.getElementById('respPickerSection');
+  if (!sec) return;
+  if (_responsables.length === 0) {
+    sec.innerHTML = '<p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Sin técnicos guardados. Toca ⚙️ para agregar.</p>';
+  } else {
+    sec.innerHTML = `<div class="field" style="margin-bottom:10px">
+      <span class="field-label">Técnico EHS</span>
+      <select class="field-input" id="respSelect3" onchange="selectResponsable(this.value)">
+        <option value="">— Firmar manualmente —</option>
+        ${_responsables.map(r=>`<option value="${r.id}"${_selectedRespId===r.id?' selected':''}>${x(r.nombre)} · C.C. ${x(r.cedula)}</option>`).join('')}
+      </select>
+    </div>`;
+  }
+  // Show/hide canvas
+  const wrapper = document.getElementById('sigWrapperEHS');
+  if (wrapper) wrapper.style.display = _selectedRespId ? 'none' : '';
+}
+
+function selectResponsable(id) {
+  if (!id) {
+    _selectedRespId = null;
+    st.sigE = null;
+    document.getElementById('eInfo').innerHTML = '<b>Firmar manualmente</b>';
+    const wrapper = document.getElementById('sigWrapperEHS');
+    if (wrapper) { wrapper.style.display = ''; requestAnimationFrame(()=>setupCv('cvE','hE')); }
+    renderRespPicker();
+    return;
+  }
+  const r = _responsables.find(r=>r.id===id);
+  if (!r) return;
+  _selectedRespId = id;
+  st.encargado = r.nombre;
+  st.cedulaEHS = r.cedula;
+  st.sigE = r.sig;
+  document.getElementById('eInfo').innerHTML = '<b>'+x(r.nombre)+'</b><br>C.C. '+x(r.cedula);
+  // Sync Step 1 fields
+  const fEnc = document.getElementById('fEnc');
+  const fCEHS = document.getElementById('fCEHS');
+  if (fEnc) fEnc.value = r.nombre;
+  if (fCEHS) fCEHS.value = r.cedula;
+  const sel1 = document.getElementById('fEncSelect');
+  if (sel1) sel1.value = id;
+  // Hide canvas
+  const wrapper = document.getElementById('sigWrapperEHS');
+  if (wrapper) wrapper.style.display = 'none';
+  renderRespPicker();
+  showToast('✅ '+r.nombre+' seleccionado');
+}
+
+function onEncSelectChange(id) {
+  selectResponsable(id);
+  if (!id) {
+    document.getElementById('fEnc').value = '';
+    document.getElementById('fCEHS').value = '';
+  }
+}
+
+function renderRespList() {
+  const sec = document.getElementById('respListSection');
+  if (!sec) return;
+  const maxReached = _responsables.length >= 4;
+  const formSec = document.getElementById('respFormSection');
+  if (formSec) formSec.style.display = maxReached ? 'none' : '';
+  if (_responsables.length === 0) { sec.innerHTML = ''; return; }
+  sec.innerHTML = '<div class="resp-grid">' + _responsables.map(r => `
+    <div class="resp-card">
+      <img src="${r.sig||''}" alt="">
+      <h4>${x(r.nombre)}</h4>
+      <p>C.C. ${x(r.cedula)}</p>
+      <button class="resp-card-del" onclick="eliminarResponsable('${r.id}')">✕ Eliminar</button>
+    </div>
+  `).join('') + '</div>' + (maxReached ? '<p style="font-size:12px;color:var(--ink2);text-align:center;margin-bottom:12px">Máximo 4 responsables alcanzado</p>' : '');
+}
+
+async function guardarResponsable() {
+  const nombre = document.getElementById('rNombre').value.trim();
+  const cedula = document.getElementById('rCedula').value.trim();
+  if (!nombre || !cedula) { alert('Ingresa nombre y cédula'); return; }
+  if (!cvReg['cvR'] || isEmpty('cvR')) { alert('Dibuja la firma del responsable'); return; }
+  const sig = await toJpeg(getURL('cvR'));
+  showToast('⏳ Guardando...');
+  try {
+    await db.collection('responsables').add({ nombre, cedula, sig });
+    document.getElementById('rNombre').value = '';
+    document.getElementById('rCedula').value = '';
+    clearSig('cvR', 'hR');
+    showToast('✅ Responsable guardado');
+  } catch(e) { showToast('⚠️ Error al guardar'); }
+}
+
+async function eliminarResponsable(id) {
+  if (!confirm('¿Eliminar este responsable?')) return;
+  await db.collection('responsables').doc(id).delete();
+  if (_selectedRespId === id) _selectedRespId = null;
+  showToast('Responsable eliminado');
+}
+
+/* ─── IMPORTAR LISTA ─── */
+let _importImageB64 = null;
+
+function openImport() {
+  document.getElementById('importModal').classList.add('open');
+  document.getElementById('importText').value = '';
+  document.getElementById('importPreview').innerHTML = '';
+}
+function closeImport() { document.getElementById('importModal').classList.remove('open'); }
+
+function saveGeminiKey() {
+  const k = document.getElementById('geminiKey').value.trim();
+  if (k) localStorage.setItem('gemini_key', k);
+}
+
+function onImgSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    _importImageB64 = dataUrl.split(',')[1];
+    const prev = document.getElementById('imgPreview');
+    prev.src = dataUrl;
+    prev.style.display = 'block';
+    document.getElementById('btnExtract').style.display = '';
+    document.getElementById('importPreview').innerHTML = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function extractWithGemini() {
+  const key = document.getElementById('geminiKey').value.trim();
+  if (!key || key.length < 20) {
+    alert('Ingresa una API key válida de Gemini.\nObtén una en aistudio.google.com/apikey'); return;
+  }
+  if (!_importImageB64) { alert('Selecciona una imagen primero'); return; }
+
+  const btn = document.getElementById('btnExtract');
+  btn.textContent = '⏳ Procesando...'; btn.disabled = true;
+
+  const MODELS = ['gemini-2.5-flash','gemini-2.0-flash-lite','gemini-2.0-flash','gemini-1.5-flash'];
+  const BODY = JSON.stringify({
+    contents: [{parts: [
+      { text: 'Esta imagen contiene una tabla de personal de RRHH. Extrae TODOS los trabajadores y devuelve SOLO un JSON con este formato exacto, sin explicaciones ni markdown:\n[{"nombre":"...","cedula":"...","cargo":"...","area":"..."}]\nSi un campo no existe en la tabla usa cadena vacía. El campo cedula solo dígitos.' },
+      { inline_data: { mime_type: 'image/jpeg', data: _importImageB64 } }
+    ]}],
+    generationConfig: { temperature: 0 }
+  });
+  try {
+    let resp, data, lastErr;
+    for (const model of MODELS) {
+      resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        { method:'POST', headers:{'Content-Type':'application/json'}, body: BODY });
+      data = await resp.json();
+      if (resp.ok) break;
+      lastErr = data.error?.message || 'Error';
+    }
+    if (!resp.ok) throw new Error(lastErr);
+
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const jsonStr = raw.match(/\[[\s\S]*\]/)?.[0];
+    if (!jsonStr) throw new Error('No se encontró tabla en la imagen');
+
+    const today = new Date().toISOString().split('T')[0];
+    const rows = JSON.parse(jsonStr).map(r => ({
+      nombre: r.nombre||'', cedula: (r.cedula||'').replace(/\D/g,''),
+      cargo: r.cargo||'', area: r.area||'',
+      fecha: today, tipo: 'induccion', encargado: '', cedulaEHS: ''
+    })).filter(r => r.nombre);
+
+    const prev = document.getElementById('importPreview');
+    prev.innerHTML = `<div class="import-preview"><table>
+      <tr><th>#</th><th>Nombre</th><th>Cédula</th><th>Cargo</th><th>Área</th></tr>
+      ${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${x(r.nombre)}</td><td>${x(r.cedula)}</td><td>${x(r.cargo)}</td><td>${x(r.area)}</td></tr>`).join('')}
+    </table></div><p style="font-size:12px;color:var(--mid);margin-top:6px;font-weight:600">✅ ${rows.length} trabajador(es) detectados por Gemini</p>`;
+
+    // Guardar temporalmente para confirmImport
+    window._geminiRows = rows;
+    saveGeminiKey();
+  } catch(err) {
+    alert('Error: ' + err.message);
+  } finally {
+    btn.textContent = '✨ Extraer datos con Gemini'; btn.disabled = false;
+  }
+}
+
+function parseImportPreview() {
+  const rows = parseTable(document.getElementById('importText').value.trim());
+  const prev = document.getElementById('importPreview');
+  if (rows.length === 0) { prev.innerHTML = ''; return; }
+  prev.innerHTML = `<div class="import-preview"><table>
+    <tr><th>#</th><th>Nombre</th><th>Cédula</th><th>Fecha</th><th>Cargo</th><th>Área</th></tr>
+    ${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${x(r.nombre)}</td><td>${x(r.cedula)}</td><td>${x(r.fecha)}</td><td>${x(r.cargo)}</td><td>${x(r.area)}</td></tr>`).join('')}
+  </table></div><p style="font-size:12px;color:var(--mid);margin-top:6px;font-weight:600">${rows.length} trabajador(es) listos para programar</p>`;
+}
+
+function parseTable(raw) {
+  const today = new Date().toISOString().split('T')[0];
+  return raw.split(/\r?\n/)
+    .map(l => l.split(/\t/).map(c => c.trim()))
+    .filter(cols => cols.length >= 2 && cols.some(c => c))
+    .map(cols => {
+      // Columnas esperadas: Nombre | Cédula | Fecha ingreso | Cargo | Área
+      const nombre = cols[0] || '';
+      const cedula = (cols[1] || '').replace(/\D/g, '');
+      const fechaRaw = cols[2] || '';
+      const cargo  = cols[3] || '';
+      const area   = cols[4] || '';
+      if (!nombre || nombre.toLowerCase().includes('nombre') || nombre.toLowerCase().includes('apellido')) return null;
+      // Normalizar fecha a YYYY-MM-DD si viene como DD/MM/YYYY o "1 de Agosto del 2026"
+      let fecha = today;
+      const dmyMatch = fechaRaw.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+      if (dmyMatch) {
+        const y = dmyMatch[3].length===2 ? '20'+dmyMatch[3] : dmyMatch[3];
+        fecha = `${y}-${dmyMatch[2].padStart(2,'0')}-${dmyMatch[1].padStart(2,'0')}`;
+      } else {
+        const meses = {enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12};
+        const textMatch = fechaRaw.toLowerCase().match(/(\d{1,2})\s+de\s+(\w+)\s+(?:del?\s+)?(\d{4})/);
+        if (textMatch) {
+          const mes = meses[textMatch[2]];
+          if (mes) fecha = `${textMatch[3]}-${String(mes).padStart(2,'0')}-${textMatch[1].padStart(2,'0')}`;
+        }
+      }
+      return nombre ? { nombre, cedula, cargo, area, fecha, tipo:'induccion', encargado:'', cedulaEHS:'' } : null;
+    })
+    .filter(Boolean);
+}
+
+async function confirmImport() {
+  const rows = parseTable(document.getElementById('importText').value.trim());
+  if (rows.length === 0) {
+    alert('No se detectaron filas válidas.\nAsegúrate de copiar la tabla directamente del correo o Excel (Ctrl+C sobre las celdas).');
+    return;
+  }
+  closeImport();
+  window._geminiRows = null;
+  showToast('⏳ Guardando '+rows.length+' trabajadores...');
+  try {
+    for (const r of rows) {
+      await db.collection('programadas').add({ ...r, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+    showToast('✅ '+rows.length+' trabajadores programados');
+  } catch(e) { showToast('⚠️ Error al guardar. Verifica tu conexión.'); }
+}
+
+/* ─── LOGO 3A CORE MATERIALS ─── */
+(function initLogo(){
+  const url = 'data:image/webp;base64,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';
+  document.querySelectorAll('.logo-print').forEach(el => { el.src = url; });
+})();
+</script>
+</body>
+</html>
