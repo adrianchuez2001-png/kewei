@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matriz IPERC - Plantabal S.A. (GTC 45)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- xlsx-js-style preserva colores y estilos al exportar -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+  /* === PALETA OFICIAL PLANTABAL (extraída del formato v05 GE-SO-RL-D2) === */
+  :root {
+    --pb-titulo: #993300;        /* Título rojizo */
+    --pb-naranja: #FFC000;       /* Puesto/Actividad/Tareas/Condición */
+    --pb-amarillo: #FFFF00;      /* Peligro */
+    --pb-verde: #92D050;         /* Controles Existentes */
+    --pb-gris: #8E98A5;          /* Evaluación de Riesgo */
+    --pb-naranja-osc: #ED7D31;   /* Criterios para Controles */
+    --pb-celeste: #9CC2E5;       /* Medidas de Intervención */
+    --pb-verde-cl: #E2EEDA;      /* Evaluación del Cumplimiento */
+    --pb-azul-cl: #8EAADB;       /* Intervención detalle */
+    /* Aceptabilidad */
+    --acc-I: #C00000;
+    --acc-II: #ED7D31;
+    --acc-III: #FFFF00;
+    --acc-IV: #00B050;
+  }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f1f5f9; }
+
+  /* Encabezado de sección con color institucional */
+  .sect-header {
+    font-weight: 700; font-size: 0.8rem; text-transform: uppercase;
+    padding: 10px 14px; border: 1px solid #334155; letter-spacing: 0.03em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sect-naranja  { background: var(--pb-naranja);     color: #1a1a1a; }
+  .sect-amarillo { background: var(--pb-amarillo);    color: #1a1a1a; }
+  .sect-verde    { background: var(--pb-verde);       color: #1a1a1a; }
+  .sect-gris     { background: var(--pb-gris);        color: #fff; }
+  .sect-naranjao { background: var(--pb-naranja-osc); color: #1a1a1a; }
+  .sect-celeste  { background: var(--pb-celeste);     color: #1a1a1a; }
+  .sect-verdecl  { background: var(--pb-verde-cl);    color: #1a1a1a; }
+
+  .card { background: white; border: 1px solid #334155; border-top: none; padding: 14px; }
+
+  .label-pb {
+    font-size: 0.7rem; font-weight: 700; color: #334155;
+    text-transform: uppercase; letter-spacing: 0.02em;
+    margin-bottom: 3px; display: block;
+  }
+  .input-pb {
+    width: 100%; padding: 6px 9px; border: 1px solid #cbd5e1;
+    border-radius: 4px; font-size: 0.82rem; background: white;
+  }
+  .input-pb:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+  .input-pb:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+
+  .calc-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px; text-align: center; }
+  .calc-label { font-size: 0.62rem; text-transform: uppercase; color: #475569; font-weight: 700; letter-spacing: 0.04em; }
+  .calc-value { font-size: 1.2rem; font-weight: 800; color: #1e293b; line-height: 1.2; }
+
+  .accept-I   { background: var(--acc-I) !important;   color: white !important; font-weight: 800; }
+  .accept-II  { background: var(--acc-II) !important;  color: white !important; font-weight: 800; }
+  .accept-III { background: var(--acc-III) !important; color: #1a1a1a !important; font-weight: 800; }
+  .accept-IV  { background: var(--acc-IV) !important;  color: white !important; font-weight: 800; }
+
+  .btn { padding: 9px 18px; border-radius: 5px; font-weight: 700; font-size: 0.85rem; transition: all 0.15s; }
+  .btn-blue    { background: #1e40af; color: white; }
+  .btn-blue:hover { background: #1e3a8a; }
+  .btn-green   { background: #16a34a; color: white; }
+  .btn-green:hover { background: #15803d; }
+  .btn-gray    { background: #64748b; color: white; }
+  .btn-gray:hover { background: #475569; }
+  .btn-red     { background: #dc2626; color: white; padding: 5px 10px; font-size: 0.72rem; }
+  .btn-red:hover { background: #b91c1c; }
+
+  .table-preview { font-size: 0.7rem; width: 100%; }
+  .table-preview th { padding: 7px 5px; text-align: center; font-weight: 700; border: 1px solid #334155; }
+  .table-preview td { padding: 5px; border: 1px solid #cbd5e1; vertical-align: top; }
+  .table-preview tbody tr:nth-child(even) { background: #f8fafc; }
+
+  /* Encabezado institucional replicando el formato Plantabal */
+  .header-plantabal {
+    border: 2px solid #1a1a1a;
+    background: white;
+  }
+  .header-plantabal .titulo {
+    background: var(--pb-titulo); color: white; font-weight: 900;
+    font-size: 1rem; padding: 14px; text-align: center; letter-spacing: 0.02em;
+  }
+  .header-plantabal .info-row {
+    display: grid; grid-template-columns: 200px 1fr 180px; border-top: 1px solid #1a1a1a;
+  }
+  .header-plantabal .info-row .k {
+    font-weight: 700; font-size: 0.72rem; padding: 7px 10px;
+    background: #f1f5f9; border-right: 1px solid #cbd5e1; display: flex; align-items: center;
+  }
+  .header-plantabal .info-row .v {
+    padding: 7px 10px; border-right: 1px solid #cbd5e1; display: flex; align-items: center;
+  }
+  .header-plantabal .info-row .r {
+    padding: 7px 10px; background: #f1f5f9; font-size: 0.7rem;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .header-plantabal input.hdr-input {
+    background: transparent; border: none; outline: none; font-size: 0.82rem;
+    font-weight: 600; color: #1e293b; width: 100%;
+  }
+  .header-plantabal input.hdr-input:focus { background: #fef3c7; }
+</style>
+</head>
+<body class="p-4 md:p-6">
+<div class="max-w-[1500px] mx-auto">
+
+  <!-- ====================== ENCABEZADO INSTITUCIONAL PLANTABAL ====================== -->
+  <div class="header-plantabal rounded shadow-md mb-5 overflow-hidden">
+    <div class="titulo">MATRIZ DE PELIGROS Y EVALUACIÓN DE RIESGOS GTC 45</div>
+    <div class="info-row">
+      <div class="k">EMPRESA</div>
+      <div class="v"><input id="hdr-empresa" class="hdr-input" value="PLANTACIONES DE BALSA PLANTABAL S.A."></div>
+      <div class="r"><span class="font-bold">Código:</span> <input id="hdr-codigo" class="hdr-input" value="GE-SO-RL-D2"></div>
+    </div>
+    <div class="info-row">
+      <div class="k">ACTIVIDAD ECONÓMICA</div>
+      <div class="v"><input id="hdr-actividad-eco" class="hdr-input" value="SIEMBRA, COSECHA, PROCESAMIENTO INDUSTRIAL, EXPORTACIÓN."></div>
+      <div class="r"><span class="font-bold">Versión:</span> <input id="hdr-version" class="hdr-input" value="05"></div>
+    </div>
+    <div class="info-row">
+      <div class="k">DIRECCIÓN</div>
+      <div class="v"><input id="hdr-direccion" class="hdr-input" value="Km 4 ½ vía a Valencia, Ecuador"></div>
+      <div class="r"><span class="font-bold">Fecha Elaboración:</span> <input id="hdr-fecha-elab" class="hdr-input" value="2022-05-10"></div>
+    </div>
+    <div class="info-row">
+      <div class="k">RESPONSABLE DE LA EVALUACIÓN</div>
+      <div class="v"><input id="hdr-responsable" class="hdr-input" value="Ing. Héctor Clavijo"></div>
+      <div class="r"><span class="font-bold">Evaluación:</span>
+        <select id="hdr-tipo-eval" class="hdr-input">
+          <option>INICIAL</option><option selected>PERIÓDICA</option>
+        </select>
+      </div>
+    </div>
+    <div class="info-row">
+      <div class="k">PUESTO DE TRABAJO A EVALUAR</div>
+      <div class="v"><input id="hdr-puesto-eval" class="hdr-input" value="Taller"></div>
+      <div class="r"><span class="font-bold">Fecha Actualización:</span> <input id="hdr-fecha-act" class="hdr-input" type="date"></div>
+    </div>
+  </div>
+
+  <!-- ====================== FOTO DEL PUESTO (informativa) ====================== -->
+  <div class="mb-4">
+    <div class="sect-header" style="background:#475569; color:#fff;">📷 Foto del Puesto Evaluado <span class="text-xs font-normal normal-case opacity-80 ml-2">(referencia visual — no se incluye en la exportación a Excel)</span></div>
+    <div class="card">
+      <div id="foto-vacia" class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 rounded cursor-pointer hover:border-blue-500 hover:bg-slate-50 transition-colors" onclick="document.getElementById('file-foto').click()">
+        <div class="text-5xl mb-2">📸</div>
+        <div class="text-sm font-semibold text-slate-700">Clic aquí para subir una foto del puesto</div>
+        <div class="text-xs text-slate-500 mt-1">JPG o PNG · se redimensiona automáticamente</div>
+      </div>
+      <div id="foto-preview" class="hidden">
+        <div class="flex items-start gap-4">
+          <img id="foto-img" class="w-48 h-48 object-cover rounded border-2 border-slate-300 shadow-sm" alt="Foto del puesto">
+          <div class="flex-1">
+            <div class="text-sm font-bold text-slate-800 mb-2">Foto cargada</div>
+            <div class="text-xs text-slate-600 mb-3" id="foto-info">—</div>
+            <div class="flex gap-2 flex-wrap">
+              <button onclick="document.getElementById('file-foto').click()" class="btn btn-gray" style="padding:6px 12px; font-size:0.75rem;">🔄 Cambiar foto</button>
+              <button onclick="verFotoCompleta()" class="btn btn-blue" style="padding:6px 12px; font-size:0.75rem;">🔍 Ver en grande</button>
+              <button onclick="eliminarFoto()" class="btn btn-red" style="font-size:0.75rem;">🗑️ Eliminar foto</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="file-foto" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="cargarFoto(event)">
+    </div>
+  </div>
+
+  <!-- Modal para ver foto en grande -->
+  <div id="foto-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-6" onclick="cerrarFotoModal()">
+    <div class="relative max-w-5xl max-h-full">
+      <button class="absolute -top-10 right-0 text-white text-3xl font-bold hover:text-red-400">✕ Cerrar</button>
+      <img id="foto-modal-img" class="max-w-full max-h-[85vh] rounded shadow-2xl" alt="Foto del puesto ampliada">
+    </div>
+  </div>
+
+  <!-- ====================== SECCIÓN 1: DATOS DE LA ACTIVIDAD (naranja) ====================== -->
+  <div class="mb-4">
+    <div class="sect-header sect-naranja">① Datos de la Actividad · Puesto / Actividad / Tareas / Condición</div>
+    <div class="card">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <label class="label-pb">Puesto de Trabajo</label>
+          <input id="puesto" class="input-pb" placeholder="Ej: Operador de montacarga">
+        </div>
+        <div>
+          <label class="label-pb">Actividad</label>
+          <input id="actividad" class="input-pb" placeholder="Ej: Operar el montacargas del taller">
+        </div>
+        <div>
+          <label class="label-pb">Tareas</label>
+          <textarea id="tareas" class="input-pb" rows="2" placeholder="Ej: Verificar pallets, trasladar madera..."></textarea>
+        </div>
+        <div>
+          <label class="label-pb">Condición</label>
+          <select id="condicion" class="input-pb">
+            <option value="RUTINARIO">RUTINARIO</option>
+            <option value="NO RUTINARIO">NO RUTINARIO</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== SECCIÓN 2: IDENTIFICACIÓN DEL PELIGRO (amarillo) ====================== -->
+  <div class="mb-4">
+    <div class="sect-header sect-amarillo">② Identificación del Peligro · Cascada Inteligente</div>
+    <div class="card">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <label class="label-pb">Factor de Riesgo</label>
+          <select id="factor" class="input-pb" onchange="onFactorChange()">
+            <option value="">-- Seleccionar --</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-pb">Identificación del Peligro</label>
+          <select id="peligro" class="input-pb" onchange="onPeligroChange()" disabled>
+            <option value="">-- Elija factor primero --</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-pb">Descripción del Riesgo</label>
+          <select id="descripcion" class="input-pb" onchange="onDescripcionChange()" disabled>
+            <option value="">-- Elija peligro primero --</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-pb">Efecto</label>
+          <select id="efecto" class="input-pb" disabled>
+            <option value="">-- Elija descripción primero --</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== SECCIÓN 3: CONTROLES EXISTENTES (verde) ====================== -->
+  <div class="mb-4">
+    <div class="sect-header sect-verde">③ Controles Existentes</div>
+    <div class="card">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label class="label-pb">Fuente</label>
+          <textarea id="ctrl-fuente" class="input-pb" rows="2" placeholder="Controles en la fuente del peligro"></textarea>
+        </div>
+        <div>
+          <label class="label-pb">Medio</label>
+          <textarea id="ctrl-medio" class="input-pb" rows="2" placeholder="Controles en el medio (señalización, barreras)"></textarea>
+        </div>
+        <div>
+          <label class="label-pb">Individuo</label>
+          <textarea id="ctrl-individuo" class="input-pb" rows="2" placeholder="Controles sobre el trabajador (capacitación, EPP)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== SECCIÓN 4: EVALUACIÓN DE RIESGO (gris) ====================== -->
+  <div class="mb-4">
+    <div class="sect-header sect-gris">④ Evaluación de Riesgo · Motor GTC 45</div>
+    <div class="card">
+      <div class="grid grid-cols-2 md:grid-cols-7 gap-3 items-end">
+        <div>
+          <label class="label-pb">ND - Deficiencia</label>
+          <select id="nd" class="input-pb" onchange="calcular()">
+            <option value="">--</option>
+            <option value="10">10 · Muy Alto</option>
+            <option value="6">6 · Alto</option>
+            <option value="2">2 · Medio</option>
+            <option value="0">0 · Bajo</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-pb">NE - Exposición</label>
+          <select id="ne" class="input-pb" onchange="calcular()">
+            <option value="">--</option>
+            <option value="4">4 · Continua</option>
+            <option value="3">3 · Frecuente</option>
+            <option value="2">2 · Ocasional</option>
+            <option value="1">1 · Esporádica</option>
+          </select>
+        </div>
+        <div class="calc-box">
+          <div class="calc-label">NP = ND × NE</div>
+          <div id="np-val" class="calc-value">—</div>
+          <div id="np-interp" class="text-[0.68rem] font-bold text-slate-600">—</div>
+        </div>
+        <div>
+          <label class="label-pb">NC - Consecuencia</label>
+          <select id="nc" class="input-pb" onchange="calcular()">
+            <option value="">--</option>
+            <option value="100">100 · Mortal / Catastrófico</option>
+            <option value="60">60 · Muy Grave</option>
+            <option value="25">25 · Grave</option>
+            <option value="10">10 · Leve</option>
+          </select>
+        </div>
+        <div class="calc-box">
+          <div class="calc-label">NR = NP × NC</div>
+          <div id="nr-val" class="calc-value">—</div>
+        </div>
+        <div class="calc-box">
+          <div class="calc-label">Interpretación NR</div>
+          <div id="nr-nivel" class="calc-value">—</div>
+        </div>
+        <div id="aceptabilidad-box" class="calc-box">
+          <div class="calc-label">Aceptabilidad</div>
+          <div id="aceptabilidad-val" class="text-xs font-bold leading-tight">—</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-2 mt-4 text-[0.68rem]">
+        <div class="accept-IV  p-2 rounded text-center">IV · NR 0–20 · Aceptable</div>
+        <div class="accept-III p-2 rounded text-center">III · NR 21–120 · Mejorable</div>
+        <div class="accept-II  p-2 rounded text-center">II · NR 121–500 · No Aceptable o con Control Específico</div>
+        <div class="accept-I   p-2 rounded text-center">I · NR 501–4000 · No Aceptable</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== SECCIÓN 5: CRITERIOS PARA CONTROLES (naranja oscuro) ====================== -->
+  <div class="mb-4">
+    <div class="sect-header sect-naranjao">⑤ Criterios para Establecer Controles</div>
+    <div class="card">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label class="label-pb">Nro. Expuestos</label>
+          <input id="expuestos" type="number" min="0" class="input-pb" placeholder="Ej: 2">
+        </div>
+        <div>
+          <label class="label-pb">Peor Consecuencia</label>
+          <input id="peor-consecuencia" class="input-pb" placeholder="Ej: FRACTURAS, MUERTE, ENFERMEDAD OCUPACIONAL">
+        </div>
+        <div>
+          <label class="label-pb">Requisito Legal Específico</label>
+          <select id="requisito-legal" class="input-pb">
+            <option value="SI">SI</option>
+            <option value="NO">NO</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== SECCIÓN 6: MEDIDAS DE INTERVENCIÓN (celeste) ====================== -->
+  <div class="mb-4">
+    <div class="sect-header sect-celeste">⑥ Medidas de Intervención · Jerarquía de Controles</div>
+    <div class="card">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div>
+          <label class="label-pb">🚫 Eliminación</label>
+          <textarea id="int-eliminacion" class="input-pb" rows="3" placeholder="Eliminar la fuente"></textarea>
+        </div>
+        <div>
+          <label class="label-pb">🔄 Sustitución</label>
+          <textarea id="int-sustitucion" class="input-pb" rows="3" placeholder="Reemplazar por algo menos peligroso"></textarea>
+        </div>
+        <div>
+          <label class="label-pb">⚙️ Ingeniería</label>
+          <textarea id="int-ingenieria" class="input-pb" rows="3" placeholder="Controles técnicos/mecánicos"></textarea>
+        </div>
+        <div>
+          <label class="label-pb">📋 Administrativos</label>
+          <textarea id="int-administrativos" class="input-pb" rows="3" placeholder="Capacitación, señalización, procedimientos"></textarea>
+        </div>
+        <div>
+          <label class="label-pb">🦺 Control sobre el Trabajador</label>
+          <textarea id="int-trabajador" class="input-pb" rows="3" placeholder="EPP, capacitación específica"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== SECCIÓN 7: EVALUACIÓN DEL CUMPLIMIENTO (verde claro) ====================== -->
+  <div class="mb-5">
+    <div class="sect-header sect-verdecl">⑦ Evaluación del Cumplimiento</div>
+    <div class="card">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="label-pb">Estatus</label>
+          <select id="estatus" class="input-pb">
+            <option>Implementado</option>
+            <option>En Proceso</option>
+            <option>No Implementado</option>
+            <option>Cumplido</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-pb">Responsable</label>
+          <input id="responsable" class="input-pb" placeholder="Ej: Equipo de EHS">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== BOTONES DE ACCIÓN ====================== -->
+  <div class="flex flex-wrap gap-3 mb-3 items-center">
+    <button onclick="agregarFila()" class="btn btn-blue">➕ Agregar a la Matriz</button>
+    <button onclick="limpiarFormulario()" class="btn btn-gray">🧹 Limpiar Formulario</button>
+    <button onclick="exportarExcel()" class="btn btn-green ml-auto">📥 Exportar a Excel (.xlsx)</button>
+  </div>
+
+  <!-- ====================== BARRA DE PERSISTENCIA ====================== -->
+  <div class="flex flex-wrap gap-3 mb-5 items-center p-3 bg-white border border-slate-300 rounded">
+    <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">💾 Persistencia:</span>
+    <button onclick="guardarJSON()" class="btn btn-blue" style="background:#0f766e;">📤 Guardar Progreso (.json)</button>
+    <button onclick="document.getElementById('file-import').click()" class="btn btn-blue" style="background:#7c3aed;">📥 Cargar Progreso (.json)</button>
+    <input type="file" id="file-import" accept=".json" style="display:none" onchange="cargarJSON(event)">
+    <button onclick="nuevaMatriz()" class="btn btn-gray">🆕 Nueva Matriz</button>
+    <span id="save-indicator" class="text-xs text-slate-500 ml-auto italic">Sin cambios aún</span>
+  </div>
+
+  <!-- ====================== TABLA ACUMULADA ====================== -->
+  <div class="bg-white border border-slate-700 rounded shadow-sm">
+    <div class="flex items-center justify-between p-3 bg-slate-800 text-white rounded-t">
+      <h3 class="font-bold text-sm">📊 Matriz Acumulada (<span id="contador">0</span> filas)</h3>
+      <button onclick="limpiarMatriz()" class="btn-red btn">🗑️ Vaciar Matriz</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="table-preview">
+        <thead>
+          <tr>
+            <th class="bg-slate-700 text-white">#</th>
+            <th style="background: var(--pb-naranja);">Puesto</th>
+            <th style="background: var(--pb-naranja);">Tarea</th>
+            <th style="background: var(--pb-amarillo);">Peligro</th>
+            <th style="background: var(--pb-amarillo);">Factor</th>
+            <th style="background: var(--pb-amarillo);">Efecto</th>
+            <th style="background: var(--pb-gris); color:#fff;">ND</th>
+            <th style="background: var(--pb-gris); color:#fff;">NE</th>
+            <th style="background: var(--pb-gris); color:#fff;">NP</th>
+            <th style="background: var(--pb-gris); color:#fff;">NC</th>
+            <th style="background: var(--pb-gris); color:#fff;">NR</th>
+            <th style="background: var(--pb-gris); color:#fff;">Nivel</th>
+            <th style="background: var(--pb-gris); color:#fff;">Aceptabilidad</th>
+            <th class="bg-slate-700 text-white">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body">
+          <tr><td colspan="14" class="text-center p-6 text-slate-400 italic">Aún no hay filas cargadas. Completa el formulario y presiona "Agregar a la Matriz".</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="text-center text-xs text-slate-500 mt-6">
+    Matriz IPERC · Plantabal S.A. · Metodología GTC 45 · Ing. Héctor Clavijo
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   BASE DE DATOS DE PELIGROS - 7 FACTORES OFICIALES
+   Según criterio Héctor Clavijo + GTC 45 adaptado Ecuador
+   ============================================================ */
+const BD = {
+  "FÍSICO": {
+    "Ruido": {
+      "Exposición a ruido continuo": ["Hipoacusia neurosensorial", "Estrés auditivo", "Cefaleas"],
+      "Exposición a ruido discontinuo / impacto": ["Pérdida progresiva del sistema auditivo", "Hipoacusia", "Trauma acústico"]
+    },
+    "Iluminación": {
+      "Iluminación deficiente": ["Fatiga visual", "Cefaleas", "Disminución de productividad"],
+      "Iluminación excesiva / deslumbramiento": ["Fatiga visual", "Lesiones oculares"]
+    },
+    "Vibración": {
+      "Exposición a vibración cuerpo entero": ["Enfermedades osteo-articulares", "Trastornos lumbares"],
+      "Exposición a vibración segmentaria (mano-brazo)": ["Síndrome de Raynaud", "Trastornos circulatorios"]
+    },
+    "Temperaturas extremas": {
+      "Exposición a radiación solar": ["Disconfort térmico", "Golpe de calor", "Deshidratación", "Quemaduras solares"],
+      "Superficies calientes": ["Quemaduras de segundo grado", "Quemaduras de primer grado"],
+      "Exposición a frío": ["Hipotermia", "Congelación periférica"]
+    },
+    "Radiaciones": {
+      "Radiaciones ionizantes (rayos X, gamma)": ["Cáncer", "Quemaduras por radiación", "Alteraciones genéticas"],
+      "Radiaciones no ionizantes (UV, láser, IR)": ["Quemaduras", "Lesiones oculares", "Cáncer de piel"]
+    },
+    "Presión atmosférica": {
+      "Presión anormal (normal o ajustada)": ["Barotrauma", "Mal de altura"]
+    }
+  },
+  "QUÍMICO": {
+    "Polvos": {
+      "Polvos orgánicos": ["Enfermedad pulmonar", "Alergias respiratorias"],
+      "Polvos inorgánicos": ["Neumoconiosis", "Irritación vías respiratorias"]
+    },
+    "Líquidos": {
+      "Nieblas y rocíos": ["Dermatitis", "Intoxicación", "Quemaduras químicas"]
+    },
+    "Gases y vapores": {
+      "Exposición a gases contaminantes (CO₂, CO, NOx)": ["Intoxicación respiratoria", "Cefalea", "Descompensación"],
+      "Exposición a vapores orgánicos": ["Intoxicación aguda / crónica", "Irritación vías respiratorias"]
+    },
+    "Humos": {
+      "Humos metálicos": ["Fiebre por vapores metálicos", "Saturnismo"],
+      "Humos no metálicos": ["Irritación respiratoria", "Enfermedad pulmonar"]
+    },
+    "Material particulado": {
+      "Exposición a material particulado": ["Enfermedad pulmonar", "Irritación ocular", "Alergias"]
+    },
+    "Fibras": {
+      "Exposición a fibras": ["Asbestosis", "Mesotelioma", "Fibrosis pulmonar"]
+    }
+  },
+  "BIOLÓGICO": {
+    "Microorganismos": {
+      "Exposición a virus": ["Infecciones virales", "Hepatitis", "COVID-19"],
+      "Exposición a bacterias": ["Infecciones bacterianas", "Tétanos", "Leptospirosis"],
+      "Exposición a hongos": ["Micosis cutáneas", "Infecciones respiratorias"],
+      "Exposición a rickettsias / parásitos": ["Tifus", "Parasitosis intestinales"]
+    },
+    "Fauna y flora": {
+      "Presencia de reptiles, arañas e insectos": ["Efectos tóxicos o alérgicos", "Mordedura ofídica", "Shock anafiláctico"],
+      "Picaduras de insectos": ["Reacciones alérgicas", "Infecciones", "Envenenamiento"],
+      "Mordeduras de animales": ["Heridas", "Rabia", "Envenenamiento"],
+      "Contacto con plantas tóxicas": ["Dermatitis", "Reacciones alérgicas"]
+    },
+    "Fluidos / excrementos": {
+      "Contacto con fluidos corporales": ["Infecciones", "Contagio de patógenos"]
+    }
+  },
+  "DE SEGURIDAD": {
+    "Mecánicos": {
+      "Herramientas manuales": ["Cortes", "Laceraciones", "Golpes", "Aplastamientos"],
+      "Maquinaria en movimiento": ["Atrapamientos", "Amputaciones", "Golpes graves"],
+      "Proyección de partículas (sólidos o fluidos)": ["Lesiones oculares", "Heridas punzantes", "Quemaduras"],
+      "Uso de objeto cortopunzante": ["Cortes", "Lesiones leves", "Tétanos"],
+      "Caída de objetos por desplome / derrumbamiento": ["Golpes sobre cabeza y tronco", "Fracturas", "TCE", "Lesiones mortales"],
+      "Almacenamiento de cargas a distinto nivel": ["Desplome de listones / material", "Golpes en cráneo", "Laceraciones"],
+      "Vehículo en movimiento (montacargas, camiones)": ["Choque contra objetos móviles", "Golpes", "Daños a infraestructura"],
+      "Exceso de velocidad": ["Choque entre vehículos", "Fracturas", "Daños al equipo"],
+      "Atropello por maquinaria pesada": ["Lesiones leves a mortales", "Politraumatismos"]
+    },
+    "Locativos": {
+      "Superficies irregulares, deslizantes o con diferencia de nivel": ["Caídas al mismo nivel", "Torceduras", "Luxaciones"],
+      "Condiciones de orden y aseo deficientes": ["Caídas", "Golpes", "Tropiezos"],
+      "Caída de objetos almacenados": ["Aplastamiento", "Golpes sobre la cabeza"],
+      "Caída de personas al mismo nivel": ["Heridas, contusiones, rozaduras", "Torceduras, luxaciones, esguinces"]
+    },
+    "Eléctricos": {
+      "Contacto con alta tensión": ["Electrocución", "Quemaduras graves", "Muerte"],
+      "Contacto con baja tensión": ["Choque eléctrico", "Quemaduras", "Paro cardíaco"],
+      "Electricidad estática": ["Incendio", "Explosión", "Choque leve"]
+    },
+    "Tecnológicos": {
+      "Explosión": ["Quemaduras graves", "Traumatismos", "Muerte"],
+      "Fuga de sustancias peligrosas": ["Intoxicación", "Asfixia", "Afectación ambiental"],
+      "Derrame": ["Contaminación", "Quemaduras químicas", "Intoxicación"],
+      "Incendio": ["Quemaduras", "Asfixia", "Muerte"]
+    },
+    "Trabajo en alturas": {
+      "Trabajo a más de 1.8 m": ["Caída de altura", "Politraumatismos", "Muerte"],
+      "Trabajo en andamios": ["Caída", "Golpes por caída de herramientas"],
+      "Trabajo en escaleras": ["Caída", "Fracturas", "TCE"]
+    },
+    "Tránsito": {
+      "Accidentes de tránsito laboral": ["Politraumatismos", "Fracturas", "Muerte"]
+    },
+    "Públicos": {
+      "Robos, atracos y asaltos": ["Lesiones físicas", "Trauma psicológico", "Muerte"],
+      "Desorden público": ["Lesiones", "Estrés postraumático"]
+    }
+  },
+  "ERGONÓMICO": {
+    "Postura": {
+      "Postura prolongada mantenida (sentado / de pie)": ["Lumbalgia", "Cervicalgia", "Trastornos musculoesqueléticos"],
+      "Postura forzada / antigravitacional": ["Lesiones osteomusculares", "Trastornos musculoesqueléticos"],
+      "Postura forzada sentado (operador montacarga)": ["Lesiones o trastornos musculoesqueléticos"]
+    },
+    "Esfuerzo físico": {
+      "Esfuerzo por manipulación manual de cargas": ["Lumbalgia", "Hernias discales", "Lesiones de hombro"],
+      "Esfuerzo muscular sostenido": ["Fatiga muscular", "Lesiones musculares"]
+    },
+    "Movimiento repetitivo": {
+      "Movimiento repetitivo de miembros superiores": ["Síndrome del túnel carpiano", "Tendinitis", "Epicondilitis"]
+    },
+    "Carga dinámica": {
+      "Carga dinámica por esfuerzos repetitivos": ["Fatiga física o muscular", "Trastornos musculoesqueléticos"]
+    }
+  },
+  "PSICOSOCIAL": {
+    "Gestión organizacional": {
+      "Estilo de mando, pago, contratación": ["Estrés laboral", "Ansiedad", "Burnout"],
+      "Deficiencias en inducción y capacitación": ["Estrés", "Baja productividad"],
+      "Evaluación del desempeño inadecuada": ["Insatisfacción laboral", "Estrés"]
+    },
+    "Organización del trabajo": {
+      "Características de la organización (comunicación, tecnología)": ["Fatiga mental", "Insatisfacción laboral"],
+      "Demandas cualitativas / cuantitativas de la labor": ["Estrés crónico", "Fatiga mental"]
+    },
+    "Grupo social": {
+      "Relaciones, cohesión, trabajo en equipo": ["Conflictos interpersonales", "Acoso laboral"]
+    },
+    "Condiciones de la tarea": {
+      "Carga mental y demandas emocionales": ["Fatiga mental", "Estrés crónico", "Depresión"],
+      "Monotonía / falta de control": ["Fatiga mental", "Insatisfacción", "Depresión"]
+    },
+    "Jornada de trabajo": {
+      "Trabajo nocturno / rotación de turnos": ["Alteración del sueño", "Trastornos metabólicos"],
+      "Horas extras / pausas insuficientes": ["Fatiga crónica", "Estrés"]
+    },
+    "Interfase persona-tarea": {
+      "Desajuste conocimientos vs demandas de la tarea": ["Frustración", "Baja productividad", "Estrés"]
+    }
+  },
+  "DE FUERZA MAYOR": {
+    "Fenómenos naturales": {
+      "Sismo / terremoto": ["Politraumatismos", "Atrapamiento", "Muerte"],
+      "Inundación": ["Ahogamiento", "Enfermedades infecciosas"],
+      "Vendaval / tormentas severas": ["Caída de objetos", "Lesiones", "Daños estructurales"],
+      "Derrumbe / deslizamiento": ["Atrapamiento", "Muerte", "Lesiones graves"],
+      "Precipitaciones extremas (lluvias, granizadas, heladas)": ["Caídas", "Hipotermia", "Accidentes de tránsito"],
+      "Erupción volcánica / ceniza": ["Afectación respiratoria", "Quemaduras", "Muerte"]
+    },
+    "Eventos de orden público": {
+      "Conmoción social / disturbios": ["Lesiones", "Estrés postraumático"]
+    }
+  }
+};
+
+/* ============================================================
+   PALETA OFICIAL PLANTABAL (coincide con CSS)
+   ============================================================ */
+const COLORS = {
+  TITULO: "993300",
+  NARANJA: "FFC000",
+  AMARILLO: "FFFF00",
+  VERDE: "92D050",
+  GRIS: "8E98A5",
+  NARANJA_OSC: "ED7D31",
+  CELESTE: "9CC2E5",
+  VERDE_CL: "E2EEDA",
+  AZUL_CL: "8EAADB",
+  ACC_I: "C00000",
+  ACC_II: "ED7D31",
+  ACC_III: "FFFF00",
+  ACC_IV: "00B050"
+};
+
+/* ============================================================
+   INICIALIZACIÓN CASCADA
+   ============================================================ */
+const matrizFilas = [];
+
+function initFactores() {
+  const sel = document.getElementById('factor');
+  Object.keys(BD).forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f; opt.textContent = f;
+    sel.appendChild(opt);
+  });
+}
+
+function onFactorChange() {
+  const factor = document.getElementById('factor').value;
+  const selPel = document.getElementById('peligro');
+  const selDesc = document.getElementById('descripcion');
+  const selEf = document.getElementById('efecto');
+  selPel.innerHTML = '<option value="">-- Seleccionar --</option>';
+  selDesc.innerHTML = '<option value="">-- Elija peligro primero --</option>';
+  selEf.innerHTML = '<option value="">-- Elija descripción primero --</option>';
+  selDesc.disabled = true; selEf.disabled = true;
+  if (!factor) { selPel.disabled = true; return; }
+  Object.keys(BD[factor]).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p; opt.textContent = p;
+    selPel.appendChild(opt);
+  });
+  selPel.disabled = false;
+}
+
+function onPeligroChange() {
+  const factor = document.getElementById('factor').value;
+  const peligro = document.getElementById('peligro').value;
+  const selDesc = document.getElementById('descripcion');
+  const selEf = document.getElementById('efecto');
+  selDesc.innerHTML = '<option value="">-- Seleccionar --</option>';
+  selEf.innerHTML = '<option value="">-- Elija descripción primero --</option>';
+  selEf.disabled = true;
+  if (!factor || !peligro) { selDesc.disabled = true; return; }
+  Object.keys(BD[factor][peligro]).forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    selDesc.appendChild(opt);
+  });
+  selDesc.disabled = false;
+}
+
+function onDescripcionChange() {
+  const factor = document.getElementById('factor').value;
+  const peligro = document.getElementById('peligro').value;
+  const desc = document.getElementById('descripcion').value;
+  const selEf = document.getElementById('efecto');
+  selEf.innerHTML = '<option value="">-- Seleccionar --</option>';
+  if (!factor || !peligro || !desc) { selEf.disabled = true; return; }
+  BD[factor][peligro][desc].forEach(e => {
+    const opt = document.createElement('option');
+    opt.value = e; opt.textContent = e;
+    selEf.appendChild(opt);
+  });
+  selEf.disabled = false;
+}
+
+/* ============================================================
+   MOTOR DE CÁLCULO GTC 45
+   ============================================================ */
+function interpretarNP(np) {
+  // Umbrales alineados con las fórmulas del formato Plantabal v05
+  // IF(NP<=4,"BAJO", IF(NP<=8,"MEDIO", IF(NP<=20,"ALTO","MUY ALTO")))
+  if (np <= 4)  return 'BAJO';
+  if (np <= 8)  return 'MEDIO';
+  if (np <= 20) return 'ALTO';
+  return 'MUY ALTO';
+}
+
+function clasificarNR(nr) {
+  // Umbrales alineados con fórmulas del formato Plantabal v05:
+  // IF(NR<=20,"IV", IF(NR<=120,"III", IF(NR<=500,"II","I")))
+  if (nr <= 20)  return { nivel: 'IV',  ac: 'ACEPTABLE',                                         clase: 'accept-IV',  color: COLORS.ACC_IV };
+  if (nr <= 120) return { nivel: 'III', ac: 'MEJORABLE',                                         clase: 'accept-III', color: COLORS.ACC_III };
+  if (nr <= 500) return { nivel: 'II',  ac: 'NO ACEPTABLE O ACEPTABLE CON CONTROL ESPECIFICO',  clase: 'accept-II',  color: COLORS.ACC_II };
+  return           { nivel: 'I',   ac: 'NO ACEPTABLE',                                      clase: 'accept-I',   color: COLORS.ACC_I };
+}
+
+function calcular() {
+  const nd = parseInt(document.getElementById('nd').value);
+  const ne = parseInt(document.getElementById('ne').value);
+  const nc = parseInt(document.getElementById('nc').value);
+  const npEl = document.getElementById('np-val');
+  const npI = document.getElementById('np-interp');
+  const nrEl = document.getElementById('nr-val');
+  const nvEl = document.getElementById('nr-nivel');
+  const acEl = document.getElementById('aceptabilidad-val');
+  const acBx = document.getElementById('aceptabilidad-box');
+  acBx.className = 'calc-box';
+  if (isNaN(nd) || isNaN(ne)) { npEl.textContent='—'; npI.textContent='—'; }
+  else { const np = nd*ne; npEl.textContent = np; npI.textContent = interpretarNP(np); }
+  if (isNaN(nd)||isNaN(ne)||isNaN(nc)) { nrEl.textContent='—'; nvEl.textContent='—'; acEl.textContent='—'; return; }
+  const np = nd*ne, nr = np*nc, c = clasificarNR(nr);
+  nrEl.textContent = nr; nvEl.textContent = c.nivel;
+  acEl.textContent = c.ac; acBx.className = 'calc-box ' + c.clase;
+}
+
+/* ============================================================
+   GESTIÓN DE FILAS
+   ============================================================ */
+function agregarFila() {
+  const peligro = document.getElementById('peligro').value;
+  const descripcion = document.getElementById('descripcion').value;
+  const factor = document.getElementById('factor').value;
+  const efecto = document.getElementById('efecto').value;
+  const nd = parseInt(document.getElementById('nd').value);
+  const ne = parseInt(document.getElementById('ne').value);
+  const nc = parseInt(document.getElementById('nc').value);
+
+  if (!peligro || !descripcion || !factor || !efecto) {
+    alert('Debe seleccionar Factor, Peligro, Descripción y Efecto.');
+    return;
+  }
+  if (isNaN(nd) || isNaN(ne) || isNaN(nc)) {
+    alert('Debe completar ND, NE y NC.');
+    return;
+  }
+
+  const np = nd*ne, nr = np*nc, c = clasificarNR(nr);
+  const fila = {
+    puesto: document.getElementById('puesto').value || '',
+    actividad: document.getElementById('actividad').value || '',
+    tareas: document.getElementById('tareas').value || '',
+    condicion: document.getElementById('condicion').value || '',
+    peligro, descripcion, factor, efecto,
+    fuente: document.getElementById('ctrl-fuente').value || '',
+    medio: document.getElementById('ctrl-medio').value || '',
+    individuo: document.getElementById('ctrl-individuo').value || '',
+    nd, ne, np, nc, nr,
+    interpNP: interpretarNP(np),
+    nivel: c.nivel, aceptabilidad: c.ac, clase: c.clase, colorAcep: c.color,
+    expuestos: document.getElementById('expuestos').value || '',
+    peorConsec: document.getElementById('peor-consecuencia').value || '',
+    reqLegal: document.getElementById('requisito-legal').value || '',
+    eliminacion: document.getElementById('int-eliminacion').value || '',
+    sustitucion: document.getElementById('int-sustitucion').value || '',
+    ingenieria: document.getElementById('int-ingenieria').value || '',
+    administrativos: document.getElementById('int-administrativos').value || '',
+    trabajador: document.getElementById('int-trabajador').value || '',
+    estatus: document.getElementById('estatus').value || '',
+    responsable: document.getElementById('responsable').value || ''
+  };
+  matrizFilas.push(fila);
+  renderTabla();
+  limpiarFormularioParcial();
+}
+
+function renderTabla() {
+  const tb = document.getElementById('tabla-body');
+  document.getElementById('contador').textContent = matrizFilas.length;
+  if (matrizFilas.length === 0) {
+    tb.innerHTML = '<tr><td colspan="14" class="text-center p-6 text-slate-400 italic">Aún no hay filas cargadas.</td></tr>';
+    return;
+  }
+  tb.innerHTML = matrizFilas.map((f,i)=>`
+    <tr>
+      <td class="text-center font-bold">${i+1}</td>
+      <td>${escapeHtml(f.puesto)}</td>
+      <td>${escapeHtml(f.tareas)}</td>
+      <td>${escapeHtml(f.peligro)}</td>
+      <td class="text-center">${escapeHtml(f.factor)}</td>
+      <td>${escapeHtml(f.efecto)}</td>
+      <td class="text-center">${f.nd}</td>
+      <td class="text-center">${f.ne}</td>
+      <td class="text-center font-semibold">${f.np}</td>
+      <td class="text-center">${f.nc}</td>
+      <td class="text-center font-bold">${f.nr}</td>
+      <td class="text-center font-bold">${f.nivel}</td>
+      <td class="${f.clase} text-center">${escapeHtml(f.aceptabilidad)}</td>
+      <td class="text-center"><button onclick="eliminarFila(${i})" class="btn-red btn">✕</button></td>
+    </tr>`).join('');
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+function eliminarFila(i) {
+  if (confirm('¿Eliminar esta fila?')) { matrizFilas.splice(i,1); renderTabla(); }
+}
+
+function limpiarMatriz() {
+  if (matrizFilas.length === 0) return;
+  if (confirm('¿Vaciar toda la matriz acumulada?')) { matrizFilas.length = 0; renderTabla(); }
+}
+
+function limpiarFormularioParcial() {
+  // Mantiene puesto/actividad/tareas/condición para cargar varios peligros de un mismo puesto
+  ['factor'].forEach(id => document.getElementById(id).value = '');
+  const selPel = document.getElementById('peligro');
+  selPel.innerHTML = '<option value="">-- Elija factor primero --</option>'; selPel.disabled = true;
+  const selDesc = document.getElementById('descripcion');
+  selDesc.innerHTML = '<option value="">-- Elija peligro primero --</option>'; selDesc.disabled = true;
+  const selEf = document.getElementById('efecto');
+  selEf.innerHTML = '<option value="">-- Elija descripción primero --</option>'; selEf.disabled = true;
+  ['ctrl-fuente','ctrl-medio','ctrl-individuo','nd','ne','nc',
+   'expuestos','peor-consecuencia',
+   'int-eliminacion','int-sustitucion','int-ingenieria','int-administrativos','int-trabajador',
+   'responsable'].forEach(id => document.getElementById(id).value = '');
+  calcular();
+}
+
+function limpiarFormulario() {
+  ['puesto','actividad','tareas'].forEach(id => document.getElementById(id).value = '');
+  limpiarFormularioParcial();
+}
+
+/* ============================================================
+   EXPORTACIÓN A EXCEL CON ESTILOS PLANTABAL
+   Usa xlsx-js-style para preservar colores, bordes y merges
+   ============================================================ */
+function exportarExcel() {
+  if (matrizFilas.length === 0) {
+    alert('La matriz está vacía. Agregue al menos una fila antes de exportar.');
+    return;
+  }
+
+  const hdr = {
+    empresa: document.getElementById('hdr-empresa').value,
+    actEco: document.getElementById('hdr-actividad-eco').value,
+    direccion: document.getElementById('hdr-direccion').value,
+    responsable: document.getElementById('hdr-responsable').value,
+    puestoEval: document.getElementById('hdr-puesto-eval').value,
+    codigo: document.getElementById('hdr-codigo').value,
+    version: document.getElementById('hdr-version').value,
+    fechaElab: document.getElementById('hdr-fecha-elab').value,
+    tipoEval: document.getElementById('hdr-tipo-eval').value,
+    fechaAct: document.getElementById('hdr-fecha-act').value || new Date().toISOString().split('T')[0]
+  };
+
+  // --- Helpers de estilo ---
+  const border = { top:{style:'thin',color:{rgb:'000000'}}, bottom:{style:'thin',color:{rgb:'000000'}},
+                   left:{style:'thin',color:{rgb:'000000'}}, right:{style:'thin',color:{rgb:'000000'}} };
+  const center = { horizontal:'center', vertical:'center', wrapText:true };
+  const left   = { horizontal:'left',   vertical:'center', wrapText:true };
+
+  const styleTitulo = { font:{bold:true, color:{rgb:'FFFFFF'}, sz:14, name:'Arial'},
+                        fill:{fgColor:{rgb:COLORS.TITULO}}, alignment:center, border };
+  const styleEtiq = { font:{bold:true, sz:9, name:'Arial'},
+                      fill:{fgColor:{rgb:'F2F2F2'}}, alignment:center, border };
+  const styleValor = { font:{bold:true, sz:10, name:'Arial'}, alignment:left, border };
+
+  function makeGroupStyle(rgb, white=false) {
+    return { font:{bold:true, sz:10, name:'Arial', color:{rgb: white?'FFFFFF':'000000'}},
+             fill:{fgColor:{rgb}}, alignment:center, border };
+  }
+  const styleGrpNaranja  = makeGroupStyle(COLORS.NARANJA);
+  const styleGrpAmarillo = makeGroupStyle(COLORS.AMARILLO);
+  const styleGrpVerde    = makeGroupStyle(COLORS.VERDE);
+  const styleGrpGris     = makeGroupStyle(COLORS.GRIS, true);
+  const styleGrpNaranjaO = makeGroupStyle(COLORS.NARANJA_OSC);
+  const styleGrpCeleste  = makeGroupStyle(COLORS.CELESTE);
+  const styleGrpAzulCl   = makeGroupStyle(COLORS.AZUL_CL);
+  const styleGrpVerdeCl  = makeGroupStyle(COLORS.VERDE_CL);
+
+  const styleData = { font:{sz:9, name:'Arial'}, alignment:{ horizontal:'left', vertical:'center', wrapText:true }, border };
+  const styleDataCenter = { font:{sz:9, name:'Arial'}, alignment:center, border };
+  const styleDataBold = { font:{sz:10, name:'Arial', bold:true}, alignment:center, border };
+
+  function styleAceptabilidad(colorHex) {
+    const textWhite = colorHex === COLORS.ACC_I || colorHex === COLORS.ACC_II || colorHex === COLORS.ACC_IV;
+    return { font:{bold:true, sz:8, name:'Arial', color:{rgb: textWhite?'FFFFFF':'000000'}},
+             fill:{fgColor:{rgb: colorHex}}, alignment:center, border };
+  }
+
+  // --- Construcción de la hoja celda por celda ---
+  const ws = {};
+  // Estructura (32 cols A..AF, pero usaremos 30: A..AD para datos)
+  // Filas 1-7: encabezado institucional
+  // Fila 8: encabezados de grupo
+  // Fila 9: encabezados de detalle
+  // Filas 10+: datos
+
+  // Encabezado institucional (replicando formato Plantabal v05)
+  setCell(ws, 'E1', 'MATRIZ DE PELIGROS Y EVALUACIÓN DE RIESGOS GTC 45', styleTitulo);
+  setCell(ws, 'AA1', hdr.codigo, { font:{bold:true, sz:10, name:'Arial'}, alignment:center, border });
+  setCell(ws, 'AA2', 'Versión: ' + hdr.version, { font:{bold:true, sz:10, name:'Arial'}, alignment:center, border });
+
+  setCell(ws, 'A3',  'EMPRESA', styleEtiq);
+  setCell(ws, 'E3',  hdr.empresa, styleValor);
+  setCell(ws, 'AA3', 'FECHA DE ELABORACIÓN', styleEtiq);
+
+  setCell(ws, 'A4',  'ACTIVIDAD ECONÓMICA', styleEtiq);
+  setCell(ws, 'E4',  hdr.actEco, styleValor);
+  setCell(ws, 'AA4', hdr.fechaElab, { ...styleValor, alignment: center });
+
+  setCell(ws, 'A5',  'DIRECCIÓN', styleEtiq);
+  setCell(ws, 'E5',  hdr.direccion, styleValor);
+  setCell(ws, 'AA5', 'INICIAL', hdr.tipoEval==='INICIAL' ? styleGrpAmarillo : styleEtiq);
+
+  setCell(ws, 'A6',  'RESPONSABLE DE LA EVALUACIÓN', styleEtiq);
+  setCell(ws, 'E6',  hdr.responsable, styleValor);
+  setCell(ws, 'AA6', 'PERIÓDICA', hdr.tipoEval==='PERIÓDICA' ? styleGrpAmarillo : styleEtiq);
+
+  setCell(ws, 'A7',  'PUESTO DE TRABAJO A EVALUAR', styleEtiq);
+  setCell(ws, 'E7',  hdr.puestoEval, styleValor);
+  setCell(ws, 'AA7', 'FECHA DE ACTUALIZACIÓN:', styleEtiq);
+  setCell(ws, 'AC7', hdr.fechaAct, { ...styleValor, alignment: center });
+
+  // Fila 8: Encabezados de grupo (12 columnas en total visibles para la tabla de datos)
+  // Layout exacto según formato Plantabal v05:
+  // A=Puesto, B=Actividad, C=Tareas, D=Condición  (naranja, también encabezan fila 9 en merge vertical)
+  // E-I = PELIGRO (amarillo): merged en fila 8
+  //   E9=Identificación del peligro, F9=Descripción del riesgo, G9=Factor, H9=Efecto, I9=reservado (ajustamos a E-H + I)
+  // Como el original tenía E-I(5) pero solo 4 campos en fila 9, lo reduciré a E-H y moveré
+  // Para mantener simplicidad y orden, uso este layout:
+  //   A=Puesto, B=Actividad, C=Tareas, D=Condición
+  //   E=ID Peligro, F=Desc Riesgo, G=Factor, H=Efecto
+  //   I=Fuente, J=Medio, K=Individuo
+  //   L=ND, M=NE, N=NP, O=Interp NP, P=NC, Q=NR, R=Interp NR
+  //   S=Aceptabilidad
+  //   T=Expuestos, U=Peor Consecuencia, V=Requisito Legal
+  //   W=Eliminación, X=Sustitución, Y=Ingeniería, Z=Administrativos, AA=Trabajador
+  //   AB=Estatus, AC=Responsable
+
+  // Encabezados de grupo fila 8
+  setCell(ws, 'A8', 'DATOS DE LA ACTIVIDAD', styleGrpNaranja);
+  setCell(ws, 'E8', 'PELIGRO', styleGrpAmarillo);
+  setCell(ws, 'I8', 'CONTROLES EXISTENTES', styleGrpVerde);
+  setCell(ws, 'L8', 'EVALUACIÓN DE RIESGO', styleGrpGris);
+  setCell(ws, 'S8', 'VALORACIÓN', styleGrpGris);
+  setCell(ws, 'T8', 'CRITERIOS PARA ESTABLECER CONTROLES', styleGrpNaranjaO);
+  setCell(ws, 'W8', 'MEDIDAS DE INTERVENCIÓN', styleGrpCeleste);
+  setCell(ws, 'AB8', 'EVALUACIÓN DEL CUMPLIMIENTO', styleGrpVerdeCl);
+
+  // Encabezados de detalle fila 9
+  const hdrs9 = [
+    ['A9', 'PUESTO DE TRABAJO', styleGrpNaranja],
+    ['B9', 'ACTIVIDAD', styleGrpNaranja],
+    ['C9', 'TAREAS', styleGrpNaranja],
+    ['D9', 'CONDICIÓN (Rutinario, No Rutinario)', styleGrpNaranja],
+    ['E9', 'IDENTIFICACIÓN DEL PELIGRO', styleGrpAmarillo],
+    ['F9', 'DESCRIPCIÓN DEL RIESGO', styleGrpAmarillo],
+    ['G9', 'FACTOR DE RIESGO', styleGrpAmarillo],
+    ['H9', 'EFECTO', styleGrpAmarillo],
+    ['I9', 'FUENTE', styleGrpVerde],
+    ['J9', 'MEDIO', styleGrpVerde],
+    ['K9', 'INDIVIDUO', styleGrpVerde],
+    ['L9', 'NIVEL DE DEFICIENCIA (ND)', styleGrpGris],
+    ['M9', 'NIVEL DE EXPOSICIÓN (NE)', styleGrpGris],
+    ['N9', 'NIVEL DE PROBABILIDAD (NP)', styleGrpGris],
+    ['O9', 'INTERPRETACIÓN DEL NIVEL DE PROBABILIDAD', styleGrpGris],
+    ['P9', 'NIVEL DE CONSECUENCIA (NC)', styleGrpGris],
+    ['Q9', 'NIVEL DE RIESGO (NR) E INTERVENCIÓN', styleGrpGris],
+    ['R9', 'INTERPRETACIÓN DEL NIVEL DE RIESGO', styleGrpGris],
+    ['S9', 'ACEPTABILIDAD DEL RIESGO', styleGrpGris],
+    ['T9', 'NRO. EXPUESTOS', styleGrpNaranjaO],
+    ['U9', 'PEOR CONSECUENCIA', styleGrpNaranjaO],
+    ['V9', 'EXISTENCIA REQUISITO LEGAL ESPECÍFICO', styleGrpNaranjaO],
+    ['W9', 'Eliminación', styleGrpAzulCl],
+    ['X9', 'Sustitución', styleGrpAzulCl],
+    ['Y9', 'Controles de Ingeniería', styleGrpAzulCl],
+    ['Z9', 'Controles Administrativos, Señalización, Advertencia', styleGrpAzulCl],
+    ['AA9', 'Control sobre el Trabajador', styleGrpAzulCl],
+    ['AB9', 'ESTATUS', styleGrpVerdeCl],
+    ['AC9', 'RESPONSABLE', styleGrpVerdeCl]
+  ];
+  hdrs9.forEach(([addr, val, st]) => setCell(ws, addr, val, st));
+
+  // Filas de datos
+  matrizFilas.forEach((f, i) => {
+    const r = 10 + i;
+    const row = [
+      f.puesto, f.actividad, f.tareas, f.condicion,
+      f.peligro, f.descripcion, f.factor, f.efecto,
+      f.fuente, f.medio, f.individuo,
+      f.nd, f.ne, f.np, f.interpNP, f.nc, f.nr, f.nivel,
+      f.aceptabilidad,
+      f.expuestos, f.peorConsec, f.reqLegal,
+      f.eliminacion, f.sustitucion, f.ingenieria, f.administrativos, f.trabajador,
+      f.estatus, f.responsable
+    ];
+    const styles = [
+      styleData, styleData, styleData, styleDataCenter,
+      styleData, styleData, styleDataCenter, styleData,
+      styleData, styleData, styleData,
+      styleDataCenter, styleDataCenter, styleDataBold, styleDataCenter,
+      styleDataCenter, styleDataBold, styleDataBold,
+      styleAceptabilidad(f.colorAcep),
+      styleDataCenter, styleDataCenter, styleDataCenter,
+      styleData, styleData, styleData, styleData, styleData,
+      styleDataCenter, styleData
+    ];
+    row.forEach((val, c) => {
+      const addr = XLSX.utils.encode_cell({ r: r-1, c: c });
+      setCell(ws, addr, val, styles[c]);
+    });
+  });
+
+  // --- Anchos de columna ---
+  ws['!cols'] = [
+    {wch:18}, {wch:28}, {wch:32}, {wch:14},        // A-D: actividad
+    {wch:30}, {wch:30}, {wch:15}, {wch:34},        // E-H: peligro
+    {wch:22}, {wch:28}, {wch:28},                  // I-K: controles existentes
+    {wch:8},  {wch:8},  {wch:8},  {wch:15},        // L-O: ND,NE,NP,InterpNP
+    {wch:8},  {wch:10}, {wch:10},                  // P-R: NC,NR,InterpNR
+    {wch:28},                                       // S: Aceptabilidad
+    {wch:10}, {wch:24}, {wch:12},                  // T-V: criterios
+    {wch:24}, {wch:24}, {wch:26}, {wch:32}, {wch:26},  // W-AA: intervención
+    {wch:14}, {wch:24}                              // AB-AC: cumplimiento
+  ];
+
+  // --- Alturas de fila ---
+  ws['!rows'] = [
+    {hpt: 32},  // 1 título
+    {hpt: 18},  // 2
+    {hpt: 20},  // 3
+    {hpt: 20},  // 4
+    {hpt: 20},  // 5
+    {hpt: 20},  // 6
+    {hpt: 20},  // 7
+    {hpt: 26},  // 8 grupo
+    {hpt: 55}   // 9 detalle
+  ];
+  for (let i=0; i<matrizFilas.length; i++) ws['!rows'].push({hpt: 75});
+
+  // --- Celdas combinadas ---
+  ws['!merges'] = [
+    // Encabezado institucional
+    { s:{r:0,c:4}, e:{r:1,c:25} },    // E1:Z2 título
+    { s:{r:0,c:26}, e:{r:0,c:29} },   // AA1:AD1 código
+    { s:{r:1,c:26}, e:{r:1,c:29} },   // AA2:AD2 versión
+    { s:{r:2,c:0}, e:{r:2,c:3} },     // A3:D3 EMPRESA
+    { s:{r:2,c:4}, e:{r:2,c:25} },    // E3:Z3 valor empresa
+    { s:{r:2,c:26}, e:{r:2,c:29} },   // AA3:AD3 Fecha elab label
+    { s:{r:3,c:0}, e:{r:3,c:3} },     // A4:D4
+    { s:{r:3,c:4}, e:{r:3,c:25} },    // E4:Z4
+    { s:{r:3,c:26}, e:{r:3,c:29} },   // AA4:AD4
+    { s:{r:4,c:0}, e:{r:4,c:3} },     // A5:D5
+    { s:{r:4,c:4}, e:{r:4,c:25} },    // E5:Z5
+    { s:{r:4,c:26}, e:{r:4,c:29} },   // AA5:AD5
+    { s:{r:5,c:0}, e:{r:5,c:3} },     // A6:D6
+    { s:{r:5,c:4}, e:{r:5,c:25} },    // E6:Z6
+    { s:{r:5,c:26}, e:{r:5,c:29} },   // AA6:AD6
+    { s:{r:6,c:0}, e:{r:6,c:3} },     // A7:D7
+    { s:{r:6,c:4}, e:{r:6,c:25} },    // E7:Z7
+    { s:{r:6,c:26}, e:{r:6,c:27} },   // AA7:AB7 Fecha Act label
+    { s:{r:6,c:28}, e:{r:6,c:29} },   // AC7:AD7 Fecha Act valor
+
+    // Fila 8 encabezados de grupo
+    { s:{r:7,c:0}, e:{r:7,c:3} },     // A8:D8 Datos actividad
+    { s:{r:7,c:4}, e:{r:7,c:7} },     // E8:H8 Peligro
+    { s:{r:7,c:8}, e:{r:7,c:10} },    // I8:K8 Controles existentes
+    { s:{r:7,c:11}, e:{r:7,c:17} },   // L8:R8 Evaluación
+    // S8 solo (Valoración) — no merge
+    { s:{r:7,c:19}, e:{r:7,c:21} },   // T8:V8 Criterios
+    { s:{r:7,c:22}, e:{r:7,c:26} },   // W8:AA8 Intervención
+    { s:{r:7,c:27}, e:{r:7,c:28} }    // AB8:AC8 Cumplimiento
+  ];
+
+  // --- Crear libro y descargar ---
+  ws['!ref'] = 'A1:AC' + (9 + matrizFilas.length);
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Matriz IPERC');
+
+  const fechaArch = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `Matriz_IPERC_Plantabal_${fechaArch}.xlsx`);
+}
+
+function setCell(ws, addr, value, style) {
+  const cell = { v: value === null || value === undefined ? '' : value, t: typeof value === 'number' ? 'n' : 's' };
+  if (style) cell.s = style;
+  ws[addr] = cell;
+}
+
+/* ============================================================
+   FOTO DEL PUESTO (solo referencia visual, no se exporta a Excel)
+   ============================================================ */
+let fotoPuesto = null; // Guarda la imagen comprimida como base64
+
+function cargarFoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    alert('El archivo debe ser una imagen (JPG, PNG, WEBP).');
+    event.target.value = '';
+    return;
+  }
+  const maxOriginalSize = 20 * 1024 * 1024; // 20 MB de entrada máximo
+  if (file.size > maxOriginalSize) {
+    alert('La imagen es demasiado grande (máx 20 MB). Usa una versión más pequeña.');
+    event.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      // Compresión: redimensionar a máx 1024px de ancho y recomprimir a JPEG 75%
+      const MAX_WIDTH = 1024;
+      let w = img.width, h = img.height;
+      if (w > MAX_WIDTH) {
+        h = Math.round((MAX_WIDTH / w) * h);
+        w = MAX_WIDTH;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; // fondo blanco por si es PNG con transparencia
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.75);
+
+      fotoPuesto = {
+        data: compressed,
+        nombreOriginal: file.name,
+        tamOriginal: file.size,
+        tamComprimido: Math.round(compressed.length * 0.75), // estimación
+        dimensiones: `${w}×${h}px`,
+        fecha: new Date().toISOString()
+      };
+      mostrarFoto();
+      autoGuardar();
+    };
+    img.onerror = () => alert('No se pudo procesar la imagen. Intenta con otro archivo.');
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function mostrarFoto() {
+  const vacia = document.getElementById('foto-vacia');
+  const preview = document.getElementById('foto-preview');
+  if (!fotoPuesto) {
+    vacia.classList.remove('hidden');
+    preview.classList.add('hidden');
+    return;
+  }
+  vacia.classList.add('hidden');
+  preview.classList.remove('hidden');
+  document.getElementById('foto-img').src = fotoPuesto.data;
+  const kb = (fotoPuesto.tamComprimido / 1024).toFixed(0);
+  const kbOrig = (fotoPuesto.tamOriginal / 1024).toFixed(0);
+  document.getElementById('foto-info').innerHTML =
+    `<strong>Archivo:</strong> ${fotoPuesto.nombreOriginal}<br>` +
+    `<strong>Dimensiones:</strong> ${fotoPuesto.dimensiones}<br>` +
+    `<strong>Tamaño:</strong> ~${kb} KB (comprimida desde ${kbOrig} KB)`;
+}
+
+function verFotoCompleta() {
+  if (!fotoPuesto) return;
+  document.getElementById('foto-modal-img').src = fotoPuesto.data;
+  document.getElementById('foto-modal').classList.remove('hidden');
+}
+
+function cerrarFotoModal() {
+  document.getElementById('foto-modal').classList.add('hidden');
+}
+
+function eliminarFoto() {
+  if (!fotoPuesto) return;
+  if (!confirm('¿Eliminar la foto del puesto?')) return;
+  fotoPuesto = null;
+  mostrarFoto();
+  autoGuardar();
+}
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') cerrarFotoModal();
+});
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+initFactores();
+
+/* ============================================================
+   PERSISTENCIA — localStorage + Import/Export JSON
+   ============================================================ */
+const STORAGE_KEY = 'iperc_plantabal_v2';
+let autoSaveTimer = null;
+
+// IDs de todos los campos del encabezado y del formulario que deben persistir
+const HDR_IDS = ['hdr-empresa','hdr-codigo','hdr-actividad-eco','hdr-version',
+                 'hdr-direccion','hdr-fecha-elab','hdr-responsable','hdr-tipo-eval',
+                 'hdr-puesto-eval','hdr-fecha-act'];
+const FORM_IDS = ['puesto','actividad','tareas','condicion',
+                  'factor','peligro','descripcion','efecto',
+                  'ctrl-fuente','ctrl-medio','ctrl-individuo',
+                  'nd','ne','nc',
+                  'expuestos','peor-consecuencia','requisito-legal',
+                  'int-eliminacion','int-sustitucion','int-ingenieria','int-administrativos','int-trabajador',
+                  'estatus','responsable'];
+
+function autoGuardar() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    const estado = {
+      version: 2,
+      fechaGuardado: new Date().toISOString(),
+      encabezado: {},
+      formularioActual: {},
+      matrizFilas: matrizFilas,
+      fotoPuesto: fotoPuesto
+    };
+    HDR_IDS.forEach(id => { const el = document.getElementById(id); if (el) estado.encabezado[id] = el.value; });
+    FORM_IDS.forEach(id => { const el = document.getElementById(id); if (el) estado.formularioActual[id] = el.value; });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
+      actualizarIndicador('guardado');
+    } catch (e) {
+      actualizarIndicador('error');
+      console.error('Error al guardar:', e);
+    }
+  }, 500); // debounce de 500ms
+}
+
+function restaurarEstado() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) { actualizarIndicador('vacio'); return; }
+    const estado = JSON.parse(raw);
+    aplicarEstado(estado);
+    const fecha = new Date(estado.fechaGuardado);
+    actualizarIndicador('restaurado', fecha);
+  } catch (e) {
+    console.error('Error al restaurar:', e);
+    actualizarIndicador('error');
+  }
+}
+
+function aplicarEstado(estado) {
+  // Encabezado
+  if (estado.encabezado) {
+    Object.entries(estado.encabezado).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+  }
+  // Formulario actual (respetando la cascada)
+  if (estado.formularioActual) {
+    const f = estado.formularioActual;
+    ['puesto','actividad','tareas','condicion'].forEach(id => {
+      if (f[id] !== undefined) document.getElementById(id).value = f[id];
+    });
+    // Cascada: factor → peligro → descripción → efecto
+    if (f.factor) {
+      document.getElementById('factor').value = f.factor;
+      onFactorChange();
+      if (f.peligro) {
+        document.getElementById('peligro').value = f.peligro;
+        onPeligroChange();
+        if (f.descripcion) {
+          document.getElementById('descripcion').value = f.descripcion;
+          onDescripcionChange();
+          if (f.efecto) document.getElementById('efecto').value = f.efecto;
+        }
+      }
+    }
+    ['ctrl-fuente','ctrl-medio','ctrl-individuo','nd','ne','nc',
+     'expuestos','peor-consecuencia','requisito-legal',
+     'int-eliminacion','int-sustitucion','int-ingenieria','int-administrativos','int-trabajador',
+     'estatus','responsable'].forEach(id => {
+      if (f[id] !== undefined) document.getElementById(id).value = f[id];
+    });
+    calcular();
+  }
+  // Matriz
+  if (Array.isArray(estado.matrizFilas)) {
+    matrizFilas.length = 0;
+    estado.matrizFilas.forEach(fila => matrizFilas.push(fila));
+    renderTabla();
+  }
+  // Foto
+  fotoPuesto = estado.fotoPuesto || null;
+  mostrarFoto();
+}
+
+function actualizarIndicador(tipo, fecha) {
+  const el = document.getElementById('save-indicator');
+  if (!el) return;
+  const ahora = new Date().toLocaleTimeString('es-EC', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+  switch (tipo) {
+    case 'guardado':
+      el.textContent = `✓ Guardado automáticamente a las ${ahora}`;
+      el.className = 'text-xs ml-auto italic text-green-700 font-semibold';
+      break;
+    case 'restaurado':
+      const f = fecha ? fecha.toLocaleString('es-EC') : '';
+      el.textContent = `↻ Sesión restaurada (guardada ${f})`;
+      el.className = 'text-xs ml-auto italic text-blue-700 font-semibold';
+      break;
+    case 'vacio':
+      el.textContent = 'Sin sesión previa guardada';
+      el.className = 'text-xs ml-auto italic text-slate-500';
+      break;
+    case 'error':
+      el.textContent = '✗ Error al guardar (storage lleno?)';
+      el.className = 'text-xs ml-auto italic text-red-700 font-semibold';
+      break;
+    case 'importado':
+      el.textContent = `📂 Archivo JSON importado correctamente`;
+      el.className = 'text-xs ml-auto italic text-blue-700 font-semibold';
+      break;
+    case 'exportado':
+      el.textContent = `📤 Progreso descargado a las ${ahora}`;
+      el.className = 'text-xs ml-auto italic text-green-700 font-semibold';
+      break;
+  }
+}
+
+function guardarJSON() {
+  const estado = {
+    version: 2,
+    fechaGuardado: new Date().toISOString(),
+    empresa: 'Plantabal S.A.',
+    encabezado: {},
+    formularioActual: {},
+    matrizFilas: matrizFilas,
+    fotoPuesto: fotoPuesto
+  };
+  HDR_IDS.forEach(id => { const el = document.getElementById(id); if (el) estado.encabezado[id] = el.value; });
+  FORM_IDS.forEach(id => { const el = document.getElementById(id); if (el) estado.formularioActual[id] = el.value; });
+
+  const blob = new Blob([JSON.stringify(estado, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const fecha = new Date().toISOString().split('T')[0];
+  const puestoEval = (document.getElementById('hdr-puesto-eval').value || 'matriz').replace(/[^a-z0-9]/gi, '_');
+  a.href = url;
+  a.download = `IPERC_${puestoEval}_${fecha}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  actualizarIndicador('exportado');
+}
+
+function cargarJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const estado = JSON.parse(e.target.result);
+      if (matrizFilas.length > 0) {
+        if (!confirm(`Ya hay ${matrizFilas.length} fila(s) en la matriz. ¿Reemplazarla con el contenido del archivo (${(estado.matrizFilas||[]).length} filas)?`)) {
+          event.target.value = '';
+          return;
+        }
+      }
+      aplicarEstado(estado);
+      autoGuardar();
+      actualizarIndicador('importado');
+    } catch (err) {
+      alert('Error al leer el archivo JSON: ' + err.message);
+    }
+    event.target.value = ''; // permite cargar el mismo archivo otra vez
+  };
+  reader.readAsText(file);
+}
+
+function nuevaMatriz() {
+  if (matrizFilas.length === 0 && !hayDatosEnFormulario() && !fotoPuesto) {
+    alert('La matriz ya está vacía.');
+    return;
+  }
+  const msg = matrizFilas.length > 0
+    ? `Se eliminarán las ${matrizFilas.length} fila(s) acumuladas, la foto del puesto y se limpiará el formulario.\n\n¿Continuar? (Tip: puedes guardar el progreso a JSON antes)`
+    : 'Se limpiará el formulario completo y la foto del puesto. ¿Continuar?';
+  if (!confirm(msg)) return;
+  matrizFilas.length = 0;
+  fotoPuesto = null;
+  mostrarFoto();
+  ['puesto','actividad','tareas'].forEach(id => document.getElementById(id).value = '');
+  limpiarFormularioParcial();
+  renderTabla();
+  localStorage.removeItem(STORAGE_KEY);
+  actualizarIndicador('vacio');
+}
+
+function hayDatosEnFormulario() {
+  return FORM_IDS.some(id => {
+    const el = document.getElementById(id);
+    return el && el.value && el.value !== '';
+  });
+}
+
+// Conectar autoguardado a eventos del formulario y del encabezado
+function conectarAutoguardado() {
+  [...HDR_IDS, ...FORM_IDS].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', autoGuardar);
+    el.addEventListener('change', autoGuardar);
+  });
+}
+
+// Hooks: disparar autoguardado cuando se agregue/elimine fila
+const _agregarFilaOriginal = agregarFila;
+agregarFila = function() { _agregarFilaOriginal(); autoGuardar(); };
+const _eliminarFilaOriginal = eliminarFila;
+eliminarFila = function(i) { _eliminarFilaOriginal(i); autoGuardar(); };
+const _limpiarMatrizOriginal = limpiarMatriz;
+limpiarMatriz = function() { _limpiarMatrizOriginal(); autoGuardar(); };
+
+// Inicializar persistencia
+conectarAutoguardado();
+restaurarEstado();
+</script>
+</body>
+</html>
