@@ -1,0 +1,666 @@
+<title>Luminómetro 2393</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root {
+  --bg: #EEF1F6;
+  --surface: #FFFFFF;
+  --surface-2: #F3F5FA;
+  --surface-3: #E8ECF3;
+  --border: #CDD5E0;
+  --border-soft: #DDE3EE;
+  --text-primary: #18243A;
+  --text-secondary: #566578;
+  --text-muted: #8898AA;
+  --accent: #1A5FA8;
+  --accent-2: #1A5FA820;
+  --accent-hover: #154D8B;
+  --pass-bg: #E6F4EC;
+  --pass-text: #1A5C30;
+  --pass-border: #AFDCC0;
+  --fail-bg: #FCECEA;
+  --fail-text: #981C1C;
+  --fail-border: #EFBBBB;
+  --mono: "IBM Plex Mono","Courier New",monospace;
+  --sans: "DM Sans",system-ui,sans-serif;
+  --r: 6px; --rlg: 10px;
+  --sh: 0 1px 3px rgba(24,36,58,.08),0 1px 2px rgba(24,36,58,.05);
+  --shlg: 0 4px 20px rgba(24,36,58,.12);
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1520;--surface:#192230;--surface-2:#1E2C3E;--surface-3:#253446;
+  --border:#2C3E56;--border-soft:#24354A;--text-primary:#DCE8F4;--text-secondary:#8DA0B8;
+  --text-muted:#566A80;--accent:#4A9ADF;--accent-2:#4A9ADF20;--accent-hover:#6AB0EA;
+  --pass-bg:#122018;--pass-text:#50C878;--pass-border:#265038;
+  --fail-bg:#261414;--fail-text:#E06060;--fail-border:#522020;
+  --sh:0 1px 3px rgba(0,0,0,.24),0 1px 2px rgba(0,0,0,.16);
+  --shlg:0 4px 20px rgba(0,0,0,.36);
+}}
+:root[data-theme="dark"]{
+  --bg:#0E1520;--surface:#192230;--surface-2:#1E2C3E;--surface-3:#253446;
+  --border:#2C3E56;--border-soft:#24354A;--text-primary:#DCE8F4;--text-secondary:#8DA0B8;
+  --text-muted:#566A80;--accent:#4A9ADF;--accent-2:#4A9ADF20;--accent-hover:#6AB0EA;
+  --pass-bg:#122018;--pass-text:#50C878;--pass-border:#265038;
+  --fail-bg:#261414;--fail-text:#E06060;--fail-border:#522020;
+  --sh:0 1px 3px rgba(0,0,0,.24),0 1px 2px rgba(0,0,0,.16);
+  --shlg:0 4px 20px rgba(0,0,0,.36);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--text-primary);background:var(--bg);min-height:100vh}
+
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px}
+.header-inner{max-width:1100px;margin:0 auto;padding:14px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand-eyebrow{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:2px}
+.brand-title{font-size:19px;font-weight:700;color:var(--text-primary);letter-spacing:-.02em;line-height:1.2;display:block}
+.brand-ref{font-family:var(--mono);font-size:10px;color:var(--accent);display:block;margin-top:2px}
+.theme-btn{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);color:var(--text-secondary);cursor:pointer;font-size:12px;padding:6px 12px;font-family:var(--sans);transition:.15s}
+.theme-btn:hover{background:var(--surface-3);color:var(--text-primary)}
+.theme-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app-body{max-width:1100px;margin:0 auto;padding:20px 24px;display:flex;flex-direction:column;gap:20px}
+@media(max-width:600px){.app-body{padding:12px}}
+
+.card{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--rlg);box-shadow:var(--sh)}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border-soft);gap:10px;flex-wrap:wrap}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary)}
+.card-body{padding:20px}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary)}
+input[type="text"],input[type="date"],input[type="number"],select,textarea{
+  font-family:var(--sans);font-size:13.5px;color:var(--text-primary);background:var(--surface-2);
+  border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;width:100%;
+  transition:.15s;appearance:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-2);background:var(--surface)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238898AA'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+textarea{resize:vertical;min-height:56px}
+.min-val{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent);background:var(--accent-2);border-radius:var(--r);padding:8px 10px;display:block}
+
+/* ── Puntos de medición ── */
+.pts-grid{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:580px){.pts-grid{grid-template-columns:1fr}}
+
+.pt-block{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:10px}
+.pt-block-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary)}
+.pt-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pt-pair input{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right}
+.pt-result{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border-soft);border-radius:4px;padding:6px 10px;margin-top:2px}
+.pt-result-label{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+.pt-result-val{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* ── Resultados generales ── */
+.res-strip{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.res-strip{grid-template-columns:1fr}}
+.rc{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.rc-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+.rc-val{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums;line-height:1.2}
+.rc-sub{font-size:11px;color:var(--text-muted)}
+.rc.pass{background:var(--pass-bg);border-color:var(--pass-border)}
+.rc.pass .rc-lbl,.rc.pass .rc-sub{color:var(--pass-text);opacity:.75}
+.rc.pass .rc-val{color:var(--pass-text)}
+.rc.fail{background:var(--fail-bg);border-color:var(--fail-border)}
+.rc.fail .rc-lbl,.rc.fail .rc-sub{color:var(--fail-text);opacity:.75}
+.rc.fail .rc-val{color:var(--fail-text)}
+
+.legal-note{grid-column:1/-1;font-size:11px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:var(--r);padding:10px 14px;line-height:1.6}
+.legal-note strong{font-weight:600;color:var(--text-secondary)}
+.btn-row{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;grid-column:1/-1}
+
+.btn{font-family:var(--sans);font-size:13px;font-weight:600;padding:9px 18px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:.15s;letter-spacing:.01em}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-ghost{background:transparent;color:var(--text-secondary);border-color:var(--border)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text-primary)}
+.btn-sm{font-size:12px;padding:6px 13px}
+
+.tbl-wrap{overflow-x:auto}
+.records-table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;min-width:780px}
+.records-table thead tr{background:var(--surface-2);border-bottom:2px solid var(--border)}
+.records-table th{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;text-align:left;white-space:nowrap}
+.records-table th.r{text-align:right}
+.records-table td{padding:9px 12px;border-bottom:1px solid var(--border-soft);color:var(--text-primary);vertical-align:middle}
+.records-table td.mc{font-family:var(--mono);font-size:12px;text-align:right}
+.records-table tbody tr:hover{background:var(--surface-2)}
+.records-table tbody tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 7px;border-radius:3px;white-space:nowrap}
+.bp{background:var(--pass-bg);color:var(--pass-text);border:1px solid var(--pass-border)}
+.bf{background:var(--fail-bg);color:var(--fail-text);border:1px solid var(--fail-border)}
+.bn{background:var(--surface-3);color:var(--text-secondary);border:1px solid var(--border)}
+.empty-state{padding:48px 20px;text-align:center;color:var(--text-muted);font-size:13px}
+.empty-icon{font-size:26px;margin-bottom:10px;opacity:.35;line-height:1}
+
+.stats-bar{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.stat-item{display:flex;align-items:baseline;gap:5px}
+.stat-num{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums}
+.stat-label{font-size:11px;color:var(--text-muted)}
+.stat-div{width:1px;height:18px;background:var(--border)}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(14,21,32,.6);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);box-shadow:var(--shlg);width:100%;max-width:680px;display:flex;flex-direction:column;max-height:90vh;overflow:hidden}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border-soft)}
+.modal-title{font-size:14px;font-weight:600;color:var(--text-primary)}
+.modal-body{padding:20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:12px}
+.modal-desc{font-size:12.5px;color:var(--text-secondary);line-height:1.6}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border-soft)}
+.data-area{font-family:var(--mono);font-size:11px;line-height:1.6;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:12px;resize:vertical;min-height:200px;max-height:300px;color:var(--text-secondary);width:100%}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text-primary);color:var(--bg);font-size:13px;font-weight:500;padding:10px 18px;border-radius:var(--r);box-shadow:var(--shlg);z-index:200;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none}
+.toast.visible{opacity:1;transform:translateY(0)}
+</style>
+
+<div class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-eyebrow">Plantabal S.A. · 3A Core Materials · Planta Quevedo</span>
+      <span class="brand-title">Monitor de Iluminación</span>
+      <span class="brand-ref">Decreto Ejecutivo 2393 · Art. 56 · IESS Ecuador</span>
+    </div>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀ Modo claro</button>
+  </div>
+</div>
+
+<div class="app-body">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Nueva medición</span>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+
+        <div class="fg">
+          <label for="fecha">Fecha</label>
+          <input type="date" id="fecha">
+        </div>
+        <div class="fg">
+          <label for="evaluador">Evaluador</label>
+          <input type="text" id="evaluador" placeholder="Nombre del evaluador">
+        </div>
+        <div class="fg">
+          <label for="area">Nombre del área</label>
+          <input type="text" id="area" placeholder="Ej. Oficina de producción">
+        </div>
+        <div class="fg">
+          <label for="tipoArea">Tipo de área</label>
+          <select id="tipoArea">
+            <option value="Operativa">Operativa</option>
+            <option value="Administrativa">Administrativa</option>
+          </select>
+        </div>
+
+        <div class="fg full">
+          <label for="actividad">Tipo de actividad — D.E. 2393 Art. 56</label>
+          <select id="actividad" onchange="onActChange()">
+            <optgroup label="20 lux — Sin requisito de distinción">
+              <option value="20" data-desc="Pasillos, patios y lugares de paso">Pasillos, patios y lugares de paso</option>
+            </optgroup>
+            <optgroup label="50 lux — Distinción no esencial">
+              <option value="50" data-desc="Manejo de materias y desechos de mercancías">Manejo de materias y desechos de mercancías</option>
+              <option value="50" data-desc="Embalaje">Embalaje</option>
+              <option value="50" data-desc="Servicios higiénicos / Baños">Servicios higiénicos / Baños</option>
+            </optgroup>
+            <optgroup label="100 lux — Ligera distinción de detalles">
+              <option value="100" data-desc="Salas de máquinas y calderos">Salas de máquinas y calderos</option>
+              <option value="100" data-desc="Ascensores">Ascensores</option>
+              <option value="100" data-desc="Fabricación de productos de hierro y acero">Fabricación de productos de hierro y acero</option>
+              <option value="100" data-desc="Taller de textiles">Taller de textiles</option>
+              <option value="100" data-desc="Industria manufacturera (general)">Industria manufacturera (general)</option>
+            </optgroup>
+            <optgroup label="200 lux — Distinción moderada de detalles">
+              <option value="200" data-desc="Talleres metal-mecánica">Talleres metal-mecánica</option>
+              <option value="200" data-desc="Costura">Costura</option>
+              <option value="200" data-desc="Industria de conservas">Industria de conservas</option>
+              <option value="200" data-desc="Imprentas">Imprentas</option>
+            </optgroup>
+            <optgroup label="300 lux — Distinción media de detalles">
+              <option value="300" data-desc="Oficinas, contabilidad, taquigrafía">Oficinas, contabilidad, taquigrafía</option>
+              <option value="300" data-desc="Trabajos de montaje (general)">Trabajos de montaje (general)</option>
+              <option value="300" data-desc="Pintura a pistola">Pintura a pistola</option>
+              <option value="300" data-desc="Tipografía">Tipografía</option>
+            </optgroup>
+            <optgroup label="500 lux — Fina distinción de detalles">
+              <option value="500" data-desc="Fresado y torneado">Fresado y torneado</option>
+              <option value="500" data-desc="Dibujo técnico">Dibujo técnico</option>
+              <option value="500" data-desc="Corrección de pruebas">Corrección de pruebas</option>
+            </optgroup>
+            <optgroup label="1000 lux — Distinción extremadamente fina">
+              <option value="1000" data-desc="Inspección delicada">Inspección delicada</option>
+              <option value="1000" data-desc="Montaje de precisión electrónica">Montaje de precisión electrónica</option>
+              <option value="1000" data-desc="Relojería">Relojería</option>
+              <option value="1000" data-desc="Trabajos artísticos / colores">Trabajos artísticos / colores</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="fg full">
+          <label>Mínimo requerido — Art. 56</label>
+          <span class="min-val" id="minVal">20 lux</span>
+        </div>
+
+        <!-- Puntos con mín / máx -->
+        <div class="pts-grid">
+
+          <div class="pt-block">
+            <div class="pt-block-title">Punto 1</div>
+            <div class="pt-pair">
+              <div class="fg">
+                <label for="p1min">Mínimo · lux</label>
+                <input type="number" id="p1min" min="0" step="0.1" placeholder="0.0" oninput="calcular()">
+              </div>
+              <div class="fg">
+                <label for="p1max">Máximo · lux</label>
+                <input type="number" id="p1max" min="0" step="0.1" placeholder="0.0" oninput="calcular()">
+              </div>
+            </div>
+            <div class="pt-result">
+              <span class="pt-result-label">Promedio P1</span>
+              <span class="pt-result-val" id="avg1">—</span>
+            </div>
+          </div>
+
+          <div class="pt-block">
+            <div class="pt-block-title">Punto 2</div>
+            <div class="pt-pair">
+              <div class="fg">
+                <label for="p2min">Mínimo · lux</label>
+                <input type="number" id="p2min" min="0" step="0.1" placeholder="0.0" oninput="calcular()">
+              </div>
+              <div class="fg">
+                <label for="p2max">Máximo · lux</label>
+                <input type="number" id="p2max" min="0" step="0.1" placeholder="0.0" oninput="calcular()">
+              </div>
+            </div>
+            <div class="pt-result">
+              <span class="pt-result-label">Promedio P2</span>
+              <span class="pt-result-val" id="avg2">—</span>
+            </div>
+          </div>
+
+          <div class="pt-block">
+            <div class="pt-block-title">Punto 3</div>
+            <div class="pt-pair">
+              <div class="fg">
+                <label for="p3min">Mínimo · lux</label>
+                <input type="number" id="p3min" min="0" step="0.1" placeholder="0.0" oninput="calcular()">
+              </div>
+              <div class="fg">
+                <label for="p3max">Máximo · lux</label>
+                <input type="number" id="p3max" min="0" step="0.1" placeholder="0.0" oninput="calcular()">
+              </div>
+            </div>
+            <div class="pt-result">
+              <span class="pt-result-label">Promedio P3</span>
+              <span class="pt-result-val" id="avg3">—</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Resultado general -->
+        <div class="res-strip">
+          <div class="rc" id="rcProm">
+            <span class="rc-lbl">Promedio general</span>
+            <span class="rc-val" id="vProm">—</span>
+            <span class="rc-sub">promedio de los 3 puntos</span>
+          </div>
+          <div class="rc" id="rcRI">
+            <span class="rc-lbl">Resultado</span>
+            <span class="rc-val" id="vRI">—</span>
+            <span class="rc-sub">vs. mínimo D.E. 2393 Art. 56</span>
+          </div>
+        </div>
+
+        <div class="fg full">
+          <label for="obs">Observaciones</label>
+          <textarea id="obs" placeholder="Condiciones del ambiente, equipo de medición, notas adicionales…"></textarea>
+        </div>
+
+        <div class="legal-note">
+          <strong>Metodología:</strong> El luxómetro muestra un valor mínimo y máximo por cada punto de medición. Se promedia mín/máx para obtener el valor representativo de cada punto, y luego se promedia entre los 3 puntos para obtener el nivel general del área. Esto se compara con el mínimo establecido por el D.E. 2393 Art. 56 según la actividad realizada.
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="limpiarForm()">Limpiar</button>
+          <button class="btn btn-primary" onclick="registrar()">Registrar medición</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Registro de mediciones</span>
+      <div class="stats-bar" id="statsBar"><span class="stat-label" style="color:var(--text-muted)">Sin registros</span></div>
+      <div class="hdr-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openCSV()">Exportar CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="openGuardar()">Guardar JSON</button>
+        <button class="btn btn-ghost btn-sm" onclick="triggerCargar()">Cargar JSON</button>
+        <button class="btn btn-sm" id="btnBorrar" style="display:none;color:var(--fail-text);border-color:var(--fail-border);background:transparent" onclick="borrarTodo()">Borrar todo</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="records-table">
+        <thead><tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Área</th>
+          <th>Tipo</th>
+          <th>Actividad</th>
+          <th class="r">Mín.</th>
+          <th class="r">P1 (avg)</th>
+          <th class="r">P2 (avg)</th>
+          <th class="r">P3 (avg)</th>
+          <th class="r">Prom. gral.</th>
+          <th>Resultado</th>
+          <th>Evaluador</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal CSV -->
+<div class="modal-overlay" id="modalCSV">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Exportar a CSV / Excel</span>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalCSV')">✕ Cerrar</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-desc">
+        <strong>Cómo abrir en Excel:</strong> Copie → abra Excel → hoja nueva → pegue (<strong>Ctrl+V</strong>). Si queda en una sola columna: <em>Datos → Texto en columnas → Delimitado por comas</em>.
+      </div>
+      <textarea class="data-area" id="csvArea" readonly></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalCSV')">Cerrar</button>
+      <button class="btn btn-primary" onclick="copiar('csvArea','CSV copiado — pégalo en Excel.')">Copiar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Guardar JSON -->
+<div class="modal-overlay" id="modalGuardar">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Guardar progreso — JSON</span>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalGuardar')">✕ Cerrar</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-desc">
+        Copie el texto, péguelo en el Bloc de notas y guárdelo como <strong>mediciones.json</strong>. Para recuperarlo use <strong>Cargar JSON</strong>.
+      </div>
+      <textarea class="data-area" id="jsonArea" readonly></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalGuardar')">Cerrar</button>
+      <button class="btn btn-primary" onclick="copiar('jsonArea','JSON copiado — guárdalo como .json.')">Copiar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cargar JSON -->
+<div class="modal-overlay" id="modalCargar">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Cargar progreso — JSON</span>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalCargar')">✕ Cerrar</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-desc">
+        Pegue el contenido del archivo JSON o selecciónelo directamente. Los registros se <strong>agregarán</strong> a los existentes sin borrar nada.
+      </div>
+      <textarea class="data-area" id="jsonPaste" placeholder='Pegue aquí el contenido JSON, o use "Seleccionar archivo"…'></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalCargar')">Cancelar</button>
+      <label class="btn btn-ghost" style="cursor:pointer">
+        Seleccionar archivo
+        <input type="file" accept=".json,application/json" style="display:none" onchange="cargarArchivo(event)">
+      </label>
+      <button class="btn btn-primary" onclick="cargarPegado()">Cargar datos</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let registros = [];
+try { const s = localStorage.getItem('lum_v4'); if(s) registros = JSON.parse(s); } catch(e){}
+function save(){ try{ localStorage.setItem('lum_v4', JSON.stringify(registros)); }catch(e){} }
+
+document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+onActChange();
+renderTable();
+renderStats();
+
+// ── Tema ──
+let theme = localStorage.getItem('lum_theme') || 'system';
+function applyTheme(){
+  const root = document.documentElement, btn = document.getElementById('themeBtn');
+  if(theme==='dark'){ root.setAttribute('data-theme','dark'); btn.textContent='☾ Modo oscuro'; }
+  else if(theme==='light'){ root.setAttribute('data-theme','light'); btn.textContent='☀ Modo claro'; }
+  else { root.removeAttribute('data-theme'); btn.textContent=window.matchMedia('(prefers-color-scheme:dark)').matches?'☾ Modo oscuro':'☀ Modo claro'; }
+}
+function toggleTheme(){ theme=theme==='light'?'dark':theme==='dark'?'system':'light'; localStorage.setItem('lum_theme',theme); applyTheme(); }
+applyTheme();
+
+function onActChange(){
+  document.getElementById('minVal').textContent = document.getElementById('actividad').value + ' lux';
+  calcular();
+}
+
+// ── Cálculo ──
+function ptAvg(minId, maxId){
+  const mn = parseFloat(document.getElementById(minId).value);
+  const mx = parseFloat(document.getElementById(maxId).value);
+  const vals = [mn, mx].filter(v => !isNaN(v) && v >= 0);
+  if(!vals.length) return null;
+  return vals.reduce((a,b)=>a+b,0) / vals.length;
+}
+
+function calcular(){
+  const a1 = ptAvg('p1min','p1max');
+  const a2 = ptAvg('p2min','p2max');
+  const a3 = ptAvg('p3min','p3max');
+  const minReq = parseFloat(document.getElementById('actividad').value);
+
+  document.getElementById('avg1').textContent = a1 !== null ? a1.toFixed(1) : '—';
+  document.getElementById('avg2').textContent = a2 !== null ? a2.toFixed(1) : '—';
+  document.getElementById('avg3').textContent = a3 !== null ? a3.toFixed(1) : '—';
+
+  const puntos = [a1, a2, a3].filter(v => v !== null);
+  if(!puntos.length){
+    document.getElementById('rcProm').className = 'rc';
+    document.getElementById('rcRI').className = 'rc';
+    document.getElementById('vProm').textContent = '—';
+    document.getElementById('vRI').textContent = '—';
+    return;
+  }
+
+  const avg = puntos.reduce((a,b)=>a+b,0) / puntos.length;
+  document.getElementById('vProm').textContent = avg.toFixed(1);
+  document.getElementById('rcProm').className = 'rc';
+
+  const pass = avg >= minReq;
+  document.getElementById('vRI').textContent = pass ? 'ACEPTABLE' : 'NO ACEPTABLE';
+  document.getElementById('rcRI').className = 'rc ' + (pass ? 'pass' : 'fail');
+}
+
+// ── Registrar ──
+function registrar(){
+  const fecha = document.getElementById('fecha').value;
+  const evaluador = document.getElementById('evaluador').value.trim();
+  const area = document.getElementById('area').value.trim();
+  const tipoArea = document.getElementById('tipoArea').value;
+  const actSel = document.getElementById('actividad');
+  const actividad = actSel.options[actSel.selectedIndex].dataset.desc;
+  const minReq = parseFloat(actSel.value);
+  const obs = document.getElementById('obs').value.trim();
+
+  if(!fecha){ showToast('Indique la fecha.'); return; }
+  if(!area){ showToast('Indique el nombre del área.'); return; }
+
+  const a1 = ptAvg('p1min','p1max');
+  const a2 = ptAvg('p2min','p2max');
+  const a3 = ptAvg('p3min','p3max');
+  const puntos = [a1, a2, a3].filter(v => v !== null);
+
+  if(!puntos.length){ showToast('Ingrese al menos un punto de medición.'); return; }
+
+  const avg = puntos.reduce((a,b)=>a+b,0) / puntos.length;
+
+  const p = (id) => { const v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; };
+
+  registros.unshift({
+    id: Date.now(), fecha, evaluador, area, tipoArea, actividad, minReq,
+    p1min: p('p1min'), p1max: p('p1max'), avg1: a1 !== null ? parseFloat(a1.toFixed(2)) : null,
+    p2min: p('p2min'), p2max: p('p2max'), avg2: a2 !== null ? parseFloat(a2.toFixed(2)) : null,
+    p3min: p('p3min'), p3max: p('p3max'), avg3: a3 !== null ? parseFloat(a3.toFixed(2)) : null,
+    avg: parseFloat(avg.toFixed(2)),
+    resultado: avg >= minReq ? 'ACEPTABLE' : 'NO ACEPTABLE',
+    obs
+  });
+
+  save(); renderTable(); renderStats();
+  showToast('Medición registrada correctamente.');
+  limpiarForm();
+}
+
+function limpiarForm(){
+  ['p1min','p1max','p2min','p2max','p3min','p3max','obs'].forEach(id=>document.getElementById(id).value='');
+  ['avg1','avg2','avg3'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('rcProm').className='rc';
+  document.getElementById('rcRI').className='rc';
+  document.getElementById('vProm').textContent='—';
+  document.getElementById('vRI').textContent='—';
+}
+
+function eliminar(id){
+  if(!confirm('¿Eliminar este registro?')) return;
+  registros=registros.filter(r=>r.id!==id);
+  save(); renderTable(); renderStats();
+  showToast('Registro eliminado.');
+}
+
+function borrarTodo(){
+  if(!confirm('¿Eliminar TODOS los registros? Esta acción no se puede deshacer.')) return;
+  registros=[]; save(); renderTable(); renderStats();
+  showToast('Todos los registros eliminados.');
+}
+
+// ── Tabla ──
+function renderTable(){
+  const tbody = document.getElementById('tbody');
+  document.getElementById('btnBorrar').style.display = registros.length ? 'inline-block' : 'none';
+  if(!registros.length){
+    tbody.innerHTML=`<tr><td colspan="13"><div class="empty-state"><div class="empty-icon">◎</div><div>Aún no hay mediciones registradas.</div><div style="margin-top:4px;font-size:11px">Complete el formulario y presione <strong>Registrar medición</strong>.</div></div></td></tr>`;
+    return;
+  }
+  const fmt = v => v !== null && v !== undefined ? parseFloat(v).toFixed(1) : '—';
+  tbody.innerHTML = registros.map((r,i) => `<tr>
+    <td class="mc" style="text-align:left;color:var(--text-muted);font-size:11px">${registros.length-i}</td>
+    <td style="white-space:nowrap;font-size:12px">${r.fecha}</td>
+    <td><strong style="font-size:13px">${escHTML(r.area)}</strong></td>
+    <td><span class="badge bn">${escHTML(r.tipoArea)}</span></td>
+    <td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary)" title="${escHTML(r.actividad)}">${escHTML(r.actividad)}</td>
+    <td class="mc"><strong>${r.minReq}</strong></td>
+    <td class="mc">${fmt(r.avg1)}</td>
+    <td class="mc">${fmt(r.avg2)}</td>
+    <td class="mc">${fmt(r.avg3)}</td>
+    <td class="mc"><strong>${fmt(r.avg)}</strong></td>
+    <td><span class="badge ${r.resultado==='ACEPTABLE'?'bp':'bf'}">${r.resultado}</span></td>
+    <td style="font-size:12px;color:var(--text-secondary)">${escHTML(r.evaluador||'—')}</td>
+    <td><button class="btn btn-sm" style="color:var(--fail-text);border-color:var(--fail-border);background:transparent;padding:3px 8px;font-size:11px" onclick="eliminar(${r.id})">✕</button></td>
+  </tr>`).join('');
+}
+
+function renderStats(){
+  const bar = document.getElementById('statsBar');
+  if(!registros.length){ bar.innerHTML=`<span class="stat-label" style="color:var(--text-muted)">Sin registros</span>`; return; }
+  const total=registros.length, ok=registros.filter(r=>r.resultado==='ACEPTABLE').length;
+  bar.innerHTML=`
+    <div class="stat-item"><span class="stat-num">${total}</span><span class="stat-label">total</span></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><span class="stat-num" style="color:var(--pass-text)">${ok}</span><span class="stat-label">aceptables</span></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><span class="stat-num" style="color:var(--fail-text)">${total-ok}</span><span class="stat-label">no aceptables</span></div>`;
+}
+
+// ── CSV ──
+function openCSV(){
+  if(!registros.length){ showToast('No hay registros para exportar.'); return; }
+  const H=['N°','Fecha','Evaluador','Área','Tipo de área','Actividad','Mín. requerido (lux)',
+    'P1 Mín','P1 Máx','P1 Promedio','P2 Mín','P2 Máx','P2 Promedio',
+    'P3 Mín','P3 Máx','P3 Promedio','Promedio general','Resultado','Observaciones'];
+  const rows=registros.map((r,i)=>[
+    registros.length-i, r.fecha, r.evaluador||'', r.area, r.tipoArea, r.actividad, r.minReq,
+    r.p1min??'', r.p1max??'', r.avg1??'',
+    r.p2min??'', r.p2max??'', r.avg2??'',
+    r.p3min??'', r.p3max??'', r.avg3??'',
+    r.avg, r.resultado, r.obs||''
+  ].map(v=>'"'+String(v).replace(/"/g,'""')+'"'));
+  document.getElementById('csvArea').value=[H.map(h=>'"'+h+'"').join(','),...rows.map(r=>r.join(','))].join('\n');
+  openModal('modalCSV');
+}
+
+// ── JSON ──
+function openGuardar(){
+  if(!registros.length){ showToast('No hay registros para guardar.'); return; }
+  document.getElementById('jsonArea').value=JSON.stringify({ version:'2.0', exportado:new Date().toISOString(), registros }, null, 2);
+  openModal('modalGuardar');
+}
+
+function triggerCargar(){
+  document.getElementById('jsonPaste').value='';
+  openModal('modalCargar');
+}
+
+function cargarArchivo(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ document.getElementById('jsonPaste').value=ev.target.result; showToast('Archivo leído — presione "Cargar datos".'); };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+function cargarPegado(){
+  const txt=document.getElementById('jsonPaste').value.trim();
+  if(!txt){ showToast('Pegue el contenido JSON primero.'); return; }
+  let data;
+  try{ data=JSON.parse(txt); } catch(e){ showToast('El texto no es un JSON válido.'); return; }
+  let nuevos=Array.isArray(data)?data:(data.registros&&Array.isArray(data.registros)?data.registros:null);
+  if(!nuevos){ showToast('Formato no reconocido.'); return; }
+  const ids=new Set(registros.map(r=>r.id));
+  const agregados=nuevos.filter(r=>r.id&&!ids.has(r.id));
+  registros=[...registros,...agregados].sort((a,b)=>b.id-a.id);
+  save(); renderTable(); renderStats();
+  closeModal('modalCargar');
+  showToast(`${agregados.length} registro(s) cargado(s).`);
+}
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',function(e){ if(e.target===this)this.classList.remove('open'); }));
+
+function copiar(areaId, msg){
+  const a=document.getElementById(areaId); a.select();
+  try{ navigator.clipboard.writeText(a.value).then(()=>showToast(msg)); } catch(e){ document.execCommand('copy'); showToast(msg); }
+}
+
+let toastT;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('visible'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('visible'),3000); }
+function escHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
